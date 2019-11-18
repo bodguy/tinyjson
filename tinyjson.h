@@ -21,9 +21,9 @@ namespace tinyjson {
   static int MAX_NUMBER_STRING_SIZE = 32;
   char * dtoa(char *s, double n) {
     // handle special cases
-    if (isnan(n)) {
+    if (std::isnan(n)) {
       strcpy(s, "nan");
-    } else if (isinf(n)) {
+    } else if (std::isinf(n)) {
       strcpy(s, "inf");
     } else if (n == 0.0) {
       strcpy(s, "0");
@@ -52,7 +52,7 @@ namespace tinyjson {
       // convert the number
       while (n > PRECISION || m >= 0) {
         double weight = pow(10.0, m);
-        if (weight > 0 && !isinf(weight)) {
+        if (weight > 0 && !std::isinf(weight)) {
           digit = floor(n / weight);
           n -= (digit * weight);
           *(c++) = '0' + digit;
