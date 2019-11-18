@@ -1,6 +1,7 @@
 *
 
 !/main.cpp
+!/tinyjson.h
 !/CMakeLists.txt
 !/README.md
 !/.gitignore
