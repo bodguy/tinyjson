@@ -1,15 +1,38 @@
 #include <iostream>
 #include <cstring>
+#include <vector>
 #include <map>
 
+enum class ValueType {
+  null_type = 0,
+  boolean_type,
+  number_type,
+  string_type,
+  array_type,
+  object_type
+};
+
 struct Value {
-  Value() :value_map() {}
+  typedef std::vector<Value> array;
+  typedef std::map<std::string, Value> object;
+  union {
+    bool bool_val;
+    int num_val;
+    std::string str_val;
+    array array_val;
+    object object_val;
+  };
+  ValueType type;
+};
+
+struct Result {
+  Result() : value_map() {}
   std::map<std::string, int> value_map;
 };
 
 bool parseValue(const char** token, int* result) {
   (*token) += strspn((*token), " \t");
-  const char* end = (*token) + strcspn((*token), " \t,}");
+  const char* end = (*token) + strcspn((*token), " \t,\n\r}");
   size_t offset = end - (*token);
   if (offset != 0) {
     char* dest = (char*)malloc(sizeof(char) * offset + 1);
@@ -18,6 +41,9 @@ bool parseValue(const char** token, int* result) {
     int value = atoi(dest);
     (*result) = value;
     free(dest);
+    if (end[0] == ',') {
+      end++;
+    }
     (*token) = end;
     return true;
   }
@@ -25,9 +51,8 @@ bool parseValue(const char** token, int* result) {
   return false;
 }
 
-std::string parseKey(const char** token, const char* endKey) {
-  (*token) += strspn((*token), " \t");
-  const char* end = (*token) + strcspn((*token), endKey);
+std::string parseKey(const char** token) {
+  const char* end = (*token) + strcspn((*token), "\"");
   size_t offset = end - (*token);
   std::string key;
   if (offset != 0) {
@@ -42,33 +67,30 @@ std::string parseKey(const char** token, const char* endKey) {
   return key;
 }
 
-bool parseJson(Value& value, const std::string& json) {
+bool parseJson(Result& value, const std::string& json) {
   const char* token = json.c_str();
-  bool is_start = false;
+  bool start_of_object = false;
 
-  while (token) {
-    token += strspn(token, " \t");
+  while ((*token)) {
+    token += strspn(token, " \t\n\r");
 
     if (token == nullptr) return false;
 
     // start of object
     if (token[0] == '{') {
-      is_start = true;
+      start_of_object = true;
       token++;
-      token += strspn(token, " \t");
+      token += strspn(token, " \t\n\r");
       // empty {} json
       if (token[0] == '}') return true;
       std::string key;
       if (token[0] == '\"') {
         token++;
-        key = parseKey(&token, "\"");
-      } else if (token[0] == '\'') {
-        token++;
-        key = parseKey(&token, "\'");
+        key = parseKey(&token);
       }
       // no key detect
       if (key.empty()) return false;
-      token += strspn(token, " \t");
+      token += strspn(token, " \t\n\r");
       if (token[0] == ':') {
         token++;
         int result = 0;
@@ -81,7 +103,33 @@ bool parseJson(Value& value, const std::string& json) {
 
     // end of json
     if (token[0] == '}') {
-      return is_start;
+      if (start_of_object) {
+        start_of_object = !start_of_object;
+        token++;
+      } else {
+        return false;
+      }
+      continue;
+    }
+
+    // start of key
+    if (token[0] == '\"') {
+      token++;
+      // empty string is not allowed
+      if (token[0] == '\"') return false;
+      std::string key;
+      key = parseKey(&token);
+      // no key detect
+      if (key.empty()) return false;
+      token += strspn(token, " \t\n\r");
+      if (token[0] == ':') {
+        token++;
+        int result = 0;
+        if(parseValue(&token, &result)) {
+          value.value_map.insert(std::make_pair(key, result));
+        }
+      }
+      continue;
     }
 
     // array
@@ -95,8 +143,13 @@ bool parseJson(Value& value, const std::string& json) {
 }
 
 int main() {
-  Value v;
-  std::string json_str = R"JSON(   { "   fsdfsafasdfasdfsdf": 1234444    })JSON";
+  Result v;
+  std::string json_str = R"JSON({
+"number": 123,
+"name": 999,
+"person": 33,
+"nickname": 1,
+})JSON";
   bool res = parseJson(v, json_str);
   if (!res) {
     std::cout << "parse failed" << '\n';
