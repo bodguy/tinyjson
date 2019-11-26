@@ -6,5 +6,5 @@
   "under_graduate": true,
   "absurd" :
     "value", "mis use": 99.223, "null_value": null,
-  "is_married": false, "empty": {}
+  "is_married": false
 }

@@ -198,16 +198,6 @@ namespace tinyjson {
       // no key found
       if (str_value.empty()) return false;
       val.set_value(str_value);
-    } else if ((*token)[0] == '{') {
-      // object
-      (*token)++;
-      (*token) += strspn((*token), " \t\n\r");
-      val.set_value(object());
-    } else if ((*token)[0] == '[') {
-      // array
-      (*token)++;
-      (*token) += strspn((*token), " \t\n\r");
-      // @TODO: array parsing
     } else if (0 == strncmp((*token), "true", 4)) {
       // boolean true
       val.set_value(true);
@@ -237,7 +227,6 @@ namespace tinyjson {
     const char* token = json.c_str();
     bool start_of_object = false;
     std::string current_key;
-    Value current_value;
     object root;
 
     while ((*token)) {

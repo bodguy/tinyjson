@@ -20,7 +20,7 @@ bool read_json_from_file(const std::string& path, std::string& json_str) {
 int main() {
   tinyjson::Value val;
   std::string json_str;
-  read_json_from_file("../sample.json", json_str);
+  read_json_from_file("../sample2.json", json_str);
   bool res = parseJson(val, json_str);
   if (!res) {
     std::cout << "parse failed" << '\n';
