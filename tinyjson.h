@@ -202,10 +202,12 @@ namespace tinyjson {
       // object
       (*token)++;
       (*token) += strspn((*token), " \t\n\r");
+      val.set_value(object());
     } else if ((*token)[0] == '[') {
       // array
       (*token)++;
       (*token) += strspn((*token), " \t\n\r");
+      // @TODO: array parsing
     } else if (0 == strncmp((*token), "true", 4)) {
       // boolean true
       val.set_value(true);
@@ -235,6 +237,7 @@ namespace tinyjson {
     const char* token = json.c_str();
     bool start_of_object = false;
     std::string current_key;
+    Value current_value;
     object root;
 
     while ((*token)) {
@@ -279,9 +282,9 @@ namespace tinyjson {
       if (token[0] == ':' && start_of_object) {
         token++;
         token += strspn(token, " \t\n\r");
-        Value current_value;
-        if (parseValue(&token, current_value)) {
-          root.insert(std::make_pair(current_key, current_value));
+        Value v;
+        if (parseValue(&token, v)) {
+          root.insert(std::make_pair(current_key, v));
         } else {
           return false;
         }
