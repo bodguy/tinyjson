@@ -1,6 +1,12 @@
 {
   "obj": {
     "name": "hello",
-    "age": 11
+    "age": 11,
+    "another": {
+      "fuck": "this shit"
+    }
+  },
+  "another2": {
+    "123": "456"
   }
 }

@@ -5,6 +5,7 @@
 #include <map>
 #include <string>
 #include <cmath>
+#include <sstream>
 
 namespace tinyjson {
   enum class ValueType {
@@ -118,12 +119,34 @@ namespace tinyjson {
     void set_value(const std::string& val) { type = ValueType::string_type; storage.str_val = new std::string(val); }
     void set_value(const array& val) { type = ValueType::array_type; storage.array_val = new array(val); }
     void set_value(const object& val) { type = ValueType::object_type; storage.object_val = new object(val); }
+    std::string to_type() const {
+      switch (type) {
+        case ValueType::string_type:
+          return "string";
+        case ValueType::object_type:
+          return "object";
+        case ValueType::array_type:
+          return "array";
+        case ValueType::null_type:
+          return "null";
+        case ValueType::number_type:
+          return "number";
+        case ValueType::boolean_type:
+          return "boolean";
+      }
+    }
+
     std::string to_str() const {
       switch (type) {
         case ValueType::string_type:
           return *(storage.str_val);
-        case ValueType::object_type:
-          return "object";
+        case ValueType::object_type: {
+          std::stringstream sstream;
+          for (auto iter : *(storage.object_val)) {
+            sstream << iter.first << " : {\n" << iter.second.to_str() << '\n' << "}" << '\n';
+          }
+          return sstream.str();
+        }
         case ValueType::array_type:
           return "array";
         case ValueType::null_type:
@@ -150,6 +173,11 @@ namespace tinyjson {
 
   typedef Value::array array;
   typedef Value::object object;
+
+  bool parseNumber(const char** token, double* number);
+  std::string parseString(const char** token);
+  bool parseValue(const char** token, Value& val, const std::string& key);
+  bool parseObject(Value& value, const char** token, const std::string& key);
 
   bool parseNumber(const char** token, double* number) {
     (*token) += strspn((*token), " \t");
@@ -188,7 +216,7 @@ namespace tinyjson {
     return key;
   }
 
-  bool parseValue(const char** token, Value& val) {
+  bool parseValue(const char** token, Value& val, const std::string& key) {
     if ((*token)[0] == '\"') {
       // string
       (*token)++;
@@ -201,11 +229,15 @@ namespace tinyjson {
     } else if ((*token)[0] == '{') {
       // object
       (*token)++;
-      (*token) += strspn((*token), " \t\n\r");
+      Value obj_val;
+      bool res = parseObject(obj_val, token, key);
+      if (!res) return false;
+      object obj;
+      obj.insert(std::make_pair(key, obj_val));
+      val.set_value(obj);
     } else if ((*token)[0] == '[') {
       // array
       (*token)++;
-      (*token) += strspn((*token), " \t\n\r");
     } else if (0 == strncmp((*token), "true", 4)) {
       // boolean true
       val.set_value(true);
@@ -228,6 +260,64 @@ namespace tinyjson {
       (*token)++;
     }
 
+    return true;
+  }
+
+  bool parseObject(Value& val, const char** token, const std::string& key) {
+    std::string current_key;
+    object root;
+
+    while ((*token)[0]) {
+      (*token) += strspn((*token), " \t\n\r");
+
+      if ((*token) == nullptr) return false;
+
+      // end of object
+      if ((*token)[0] == '}') {
+        (*token)++;
+        break;
+      }
+
+      // start of key
+      if ((*token)[0] == '\"') {
+        (*token)++;
+        // empty string is not allowed
+        if ((*token)[0] == '\"') return false;
+        current_key = parseString(token);
+        // no key found
+        if (current_key.empty()) return false;
+        if ((*token)[0] == ',') token++;
+        continue;
+      }
+
+      // start of value
+      if ((*token)[0] == ':') {
+        (*token)++;
+        (*token) += strspn((*token), " \t\n\r");
+        Value current_value;
+        if ((*token)[0] == '{') {
+          (*token)++;
+          if (parseObject(current_value, token, current_key)) {
+            root.insert(std::make_pair(current_key, current_value));
+          } else {
+            return false;
+          }
+        } else {
+          if (parseValue(token, current_value, key)) {
+            root.insert(std::make_pair(current_key, current_value));
+          } else {
+            return false;
+          }
+        }
+        continue;
+      }
+    }
+
+    if ((*token)[0] == ',') {
+      (*token)++;
+    }
+
+    val.set_value(root);
     return true;
   }
 
@@ -280,11 +370,12 @@ namespace tinyjson {
         token++;
         token += strspn(token, " \t\n\r");
         Value current_value;
-        if (parseValue(&token, current_value)) {
+        if (parseValue(&token, current_value, current_key)) {
           root.insert(std::make_pair(current_key, current_value));
         } else {
           return false;
         }
+        continue;
       }
 
       // array
