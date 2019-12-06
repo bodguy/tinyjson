@@ -25,9 +25,7 @@ int main() {
   if (!res) {
     std::cout << "parse failed" << '\n';
   } else {
-    for (auto iter : *(val.storage.object_val)) {
-      std::cout << iter.first << " : " << iter.second.to_str() << std::endl;
-    }
+    std::cout << val.pretty_print() << std::endl;
   }
 
   return 0;

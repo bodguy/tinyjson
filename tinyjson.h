@@ -136,28 +136,51 @@ namespace tinyjson {
       }
     }
 
-    std::string to_str() const {
+    std::string indentation(unsigned int indent) const {
+      std::stringstream sstream;
+      for (int i = 0; i < indent; i++) {
+        sstream << "\t";
+      }
+      return sstream.str();
+    }
+
+    std::string pretty_print(unsigned int indent = 0) const {
+      std::stringstream sstream;
       switch (type) {
         case ValueType::string_type:
-          return *(storage.str_val);
+          sstream << '\"' << *(storage.str_val) << '\"';
+          break;
         case ValueType::object_type: {
-          std::stringstream sstream;
-          for (auto iter : *(storage.object_val)) {
-            sstream << iter.first << " : {\n" << iter.second.to_str() << '\n' << "}" << '\n';
+          sstream << indentation(indent);
+          for (const auto& iter : *(storage.object_val)) {
+            sstream << "\"" << iter.first << "\"" << ": ";
+            if (iter.second.type == ValueType::object_type) {
+              sstream << "{\n";
+            }
+            sstream << iter.second.pretty_print(indent + 1);
+            if (iter.second.type == ValueType::object_type) {
+              sstream << '\n' << indentation(indent) << "},";
+            }
           }
-          return sstream.str();
+          break;
         }
         case ValueType::array_type:
-          return "array";
+          sstream << "array";
+          break;
         case ValueType::null_type:
-          return "null";
+          sstream << "null";
+          break;
         case ValueType::number_type: {
           char buf[MAX_NUMBER_STRING_SIZE];
-          return std::string(dtoa(buf, storage.num_val));
+          sstream << std::string(dtoa(buf, storage.num_val));
+          break;
         }
         case ValueType::boolean_type:
-          return storage.bool_val ? "true" : "false";
+          sstream << (storage.bool_val ? "true" : "false");
+          break;
       }
+
+      return sstream.str();
     }
 
     union Storage {
@@ -226,15 +249,6 @@ namespace tinyjson {
       // no key found
       if (str_value.empty()) return false;
       val.set_value(str_value);
-    } else if ((*token)[0] == '{') {
-      // object
-      (*token)++;
-      Value obj_val;
-      bool res = parseObject(obj_val, token, key);
-      if (!res) return false;
-      object obj;
-      obj.insert(std::make_pair(key, obj_val));
-      val.set_value(obj);
     } else if ((*token)[0] == '[') {
       // array
       (*token)++;
@@ -295,6 +309,7 @@ namespace tinyjson {
         (*token)++;
         (*token) += strspn((*token), " \t\n\r");
         Value current_value;
+        // another object
         if ((*token)[0] == '{') {
           (*token)++;
           if (parseObject(current_value, token, current_key)) {
@@ -370,11 +385,20 @@ namespace tinyjson {
         token++;
         token += strspn(token, " \t\n\r");
         Value current_value;
-        if (parseValue(&token, current_value, current_key)) {
-          root.insert(std::make_pair(current_key, current_value));
+
+        // check is object
+        if (token[0] == '{') {
+          token++;
+          Value obj_val;
+          if (!parseObject(obj_val, &token, current_key))
+            return false;
+          root.insert(std::make_pair(current_key, obj_val));
         } else {
-          return false;
+          if (!parseValue(&token, current_value, current_key))
+            return false;
+          root.insert(std::make_pair(current_key, current_value));
         }
+
         continue;
       }
 
