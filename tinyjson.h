@@ -163,24 +163,30 @@ namespace tinyjson {
         case ValueType::object_type: {
           unsigned int idx = 0;
           unsigned int size = storage.object_val->size() - 1;
+          std::string indent_str = indentation(indent);
           for (const auto& iter : *(storage.object_val)) {
+            // prevent first newline
             if (idx != 0) {
               sstream << '\n';
             }
-            sstream << indentation(indent)  << "\"" << iter.first << "\": ";
+            sstream << indent_str << "\"" << iter.first << "\": ";
             if (iter.second.type == ValueType::object_type) {
               sstream << "{\n";
             }
             sstream << iter.second.pretty(indent + 1, idx != size);
             if (iter.second.type == ValueType::object_type) {
-              sstream << '\n' << indentation(indent) << '}' << comma;
+              // prevent last object comma
+              if (idx == size) {
+                comma = "";
+              }
+              sstream << '\n' << indent_str << '}' << comma;
             }
             idx++;
           }
           break;
         }
         case ValueType::array_type:
-          sstream << "array";
+          sstream << "array" << comma;
           break;
         case ValueType::null_type:
           sstream << "null" << comma;

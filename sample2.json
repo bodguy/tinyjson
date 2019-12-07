@@ -13,8 +13,22 @@
         "containerPort": 8080,
         "hostPort": 0,
         "protocol": "tcp",
+        "portMappings": {
+          "containerPort": 8080,
+          "hostPort": 0,
+          "protocol": "tcp",
+          "servicePort": {
+            "name": "batch",
+            "protocol": "tcp",
+            "hostPort": {
+              "name": "batch",
+              "protocol": "tcp"
+            }
+          },
+          "name": "batch"
+        },
         "servicePort": 10120,
-        "name": "suggest-batch"
+        "name": "batch"
     },
     "type": "DOCKER",
     "docker": {
