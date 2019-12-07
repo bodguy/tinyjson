@@ -136,31 +136,46 @@ namespace tinyjson {
       }
     }
 
-    std::string indentation(unsigned int indent) const {
+    static std::string indentation(unsigned int indent) {
       std::stringstream sstream;
       for (int i = 0; i < indent; i++) {
-        sstream << "\t";
+        sstream << "  ";
       }
       return sstream.str();
     }
 
-    std::string pretty_print(unsigned int indent = 0) const {
+    std::string pretty(unsigned int indent = 1, bool has_next = true) const {
       std::stringstream sstream;
+      std::string comma;
+
+      if (has_next) {
+        comma = ",";
+      }
+
+      if (indent == 1) {
+        sstream << "{\n";
+      }
+
       switch (type) {
         case ValueType::string_type:
-          sstream << '\"' << *(storage.str_val) << '\"';
+          sstream << '\"' << *(storage.str_val) << '\"' << comma;
           break;
         case ValueType::object_type: {
-          sstream << indentation(indent);
+          unsigned int idx = 0;
+          unsigned int size = storage.object_val->size() - 1;
           for (const auto& iter : *(storage.object_val)) {
-            sstream << "\"" << iter.first << "\"" << ": ";
+            if (idx != 0) {
+              sstream << '\n';
+            }
+            sstream << indentation(indent)  << "\"" << iter.first << "\": ";
             if (iter.second.type == ValueType::object_type) {
               sstream << "{\n";
             }
-            sstream << iter.second.pretty_print(indent + 1);
+            sstream << iter.second.pretty(indent + 1, idx != size);
             if (iter.second.type == ValueType::object_type) {
-              sstream << '\n' << indentation(indent) << "},";
+              sstream << '\n' << indentation(indent) << '}' << comma;
             }
+            idx++;
           }
           break;
         }
@@ -168,16 +183,20 @@ namespace tinyjson {
           sstream << "array";
           break;
         case ValueType::null_type:
-          sstream << "null";
+          sstream << "null" << comma;
           break;
         case ValueType::number_type: {
           char buf[MAX_NUMBER_STRING_SIZE];
-          sstream << std::string(dtoa(buf, storage.num_val));
+          sstream << std::string(dtoa(buf, storage.num_val)) << comma;
           break;
         }
         case ValueType::boolean_type:
-          sstream << (storage.bool_val ? "true" : "false");
+          sstream << (storage.bool_val ? "true" : "false") << comma;
           break;
+      }
+
+      if (indent == 1) {
+        sstream << "\n}";
       }
 
       return sstream.str();
