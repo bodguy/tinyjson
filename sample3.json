@@ -1,0 +1,10 @@
+{
+  "servicePort": {
+    "hostPort": {
+      "name": "batch",
+      "protocol": "tcp"
+    },
+    "name": "batch",
+    "protocol": "tcp"
+  }
+}
