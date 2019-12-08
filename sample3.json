@@ -2,9 +2,11 @@
   "servicePort": {
     "hostPort": {
       "name": "batch",
-      "protocol": "tcp"
+      "protocol": {
+        "test": 123
+      }
     },
-    "name": "batch",
-    "protocol": "tcp"
+    "name2": null,
+    "protocol2": false
   }
 }

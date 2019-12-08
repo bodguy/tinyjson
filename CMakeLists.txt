@@ -3,4 +3,4 @@ project(tinyjson)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_executable(tinyjson main.cpp)
+add_executable(tinyjson main.cpp tinyjson.h utils.h)

@@ -30,8 +30,8 @@ namespace tinyjson {
   public:
     typedef std::pair<K, V> value_type;
     typedef int size_type;
-    typedef typename std::list<value_type>::iterator list_iterator;
-    typedef typename std::list<value_type>::const_iterator list_const_iterator;
+    typedef typename std::list<value_type>::iterator iterator;
+    typedef typename std::list<value_type>::const_iterator const_iterator;
 
   public:
     linked_hash_map() : linked_list(), hash_map() {
@@ -45,7 +45,7 @@ namespace tinyjson {
     }
 
     bool erase(const K& key) {
-      typename std::unordered_map<K, list_iterator>::iterator iter = hash_map.find(key);
+      typename std::unordered_map<K, iterator>::iterator iter = hash_map.find(key);
       if (iter == hash_map.end()) {
         return false;
       }
@@ -58,14 +58,18 @@ namespace tinyjson {
       return linked_list.size();
     }
 
-    list_iterator begin() { return linked_list.begin(); }
-    list_iterator end() { return linked_list.end(); }
-    list_const_iterator cbegin() const { linked_list.cbegin(); }
-    list_const_iterator cend() const { linked_list.cend(); }
+    bool empty() const {
+      return linked_list.empty();
+    }
+
+    iterator begin() { return linked_list.begin(); }
+    iterator end() { return linked_list.end(); }
+    const_iterator cbegin() const { return linked_list.cbegin(); }
+    const_iterator cend() const { return linked_list.cend(); }
 
   private:
     std::list<value_type> linked_list;
-    std::unordered_map<K, list_iterator> hash_map;
+    std::unordered_map<K, iterator> hash_map;
   };
 
   enum class ValueType {
@@ -206,10 +210,10 @@ namespace tinyjson {
 
     std::string pretty(unsigned int indent = 1, bool has_next = true) const {
       std::stringstream sstream;
-      std::string comma;
+      std::string delim;
 
       if (has_next) {
-        comma = ",";
+        delim = ',';
       }
 
       if (indent == 1) {
@@ -218,46 +222,50 @@ namespace tinyjson {
 
       switch (type) {
         case ValueType::string_type:
-          sstream << '\"' << *(storage.str_val) << '\"' << comma;
+          sstream << '\"' << *(storage.str_val) << '\"' << delim;
           break;
         case ValueType::object_type: {
-          unsigned int idx = 0;
-          unsigned int size = storage.object_val->size() - 1;
-          std::string indent_str = indentation(indent);
-          for (const auto& iter : *(storage.object_val)) {
+          std::string space = indentation(indent);
+          for (auto iter = storage.object_val->cbegin(); iter != storage.object_val->cend(); iter++) {
             // prevent first newline
-            if (idx != 0) {
+            if (iter != storage.object_val->begin()) {
               sstream << '\n';
             }
-            sstream << indent_str << "\"" << iter.first << "\": ";
-            if (iter.second.type == ValueType::object_type) {
-              sstream << "{\n";
-            }
-            sstream << iter.second.pretty(indent + 1, idx != size);
-            if (iter.second.type == ValueType::object_type) {
-              // prevent last object comma
-              if (idx == size) {
-                comma = "";
+            sstream << space << "\"" << iter->first << "\": ";
+            if (iter->second.type == ValueType::object_type) {
+              sstream << '{';
+              if (!iter->second.storage.object_val->empty()) {
+                sstream << '\n';
               }
-              sstream << '\n' << indent_str << '}' << comma;
             }
-            idx++;
+            auto iterCopy = iter;
+            bool next = false;
+            if (++iterCopy != storage.object_val->cend()) {
+              next = true;
+            }
+            sstream << iter->second.pretty(indent + 1, next);
+            if (iter->second.type == ValueType::object_type) {
+              if (!iter->second.storage.object_val->empty()) {
+                sstream << '\n' << space;
+              }
+              sstream << '}' << (next ? "," : "");
+            }
           }
           break;
         }
         case ValueType::array_type:
-          sstream << "array" << comma;
+          sstream << "array" << delim;
           break;
         case ValueType::null_type:
-          sstream << "null" << comma;
+          sstream << "null" << delim;
           break;
         case ValueType::number_type: {
           char buf[MAX_NUMBER_STRING_SIZE];
-          sstream << std::string(dtoa(buf, storage.num_val)) << comma;
+          sstream << std::string(dtoa(buf, storage.num_val)) << delim;
           break;
         }
         case ValueType::boolean_type:
-          sstream << (storage.bool_val ? "true" : "false") << comma;
+          sstream << (storage.bool_val ? "true" : "false") << delim;
           break;
       }
 
