@@ -2,12 +2,72 @@
 #include <cstring>
 #include <utility>
 #include <vector>
-#include <map>
+#include <unordered_map>
+#include <list>
 #include <string>
 #include <cmath>
 #include <sstream>
+#include <fstream>
 
 namespace tinyjson {
+  // https://stackoverflow.com/questions/2602013/read-whole-ascii-file-into-c-stdstring
+  bool read_file(const std::string& path, std::string& json_str) {
+    std::ifstream ifs(path);
+    if(!ifs) {
+      return false;
+    }
+
+    ifs.seekg(0, std::ios::end);
+    json_str.reserve(ifs.tellg());
+    ifs.seekg(0, std::ios::beg);
+
+    json_str.assign((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+    return true;
+  }
+
+  template <typename K, typename V>
+  class linked_hash_map {
+  public:
+    typedef std::pair<K, V> value_type;
+    typedef int size_type;
+    typedef typename std::list<value_type>::iterator list_iterator;
+    typedef typename std::list<value_type>::const_iterator list_const_iterator;
+
+  public:
+    linked_hash_map() : linked_list(), hash_map() {
+      linked_list.clear();
+      hash_map.clear();
+    }
+
+    auto insert(const value_type& value) {
+      linked_list.push_back(value);
+      return hash_map.insert(std::make_pair(value.first, std::prev(linked_list.end())));
+    }
+
+    bool erase(const K& key) {
+      typename std::unordered_map<K, list_iterator>::iterator iter = hash_map.find(key);
+      if (iter == hash_map.end()) {
+        return false;
+      }
+      linked_list.erase((*iter).second);
+      hash_map.erase(iter);
+      return true;
+    }
+
+    size_type size() const {
+      return linked_list.size();
+    }
+
+    list_iterator begin() { return linked_list.begin(); }
+    list_iterator end() { return linked_list.end(); }
+    list_const_iterator cbegin() const { linked_list.cbegin(); }
+    list_const_iterator cend() const { linked_list.cend(); }
+
+  private:
+    std::list<value_type> linked_list;
+    std::unordered_map<K, list_iterator> hash_map;
+  };
+
   enum class ValueType {
     null_type = 0,
     boolean_type,
@@ -94,7 +154,7 @@ namespace tinyjson {
 
   struct Value {
     typedef std::vector<Value> array;
-    typedef std::map<std::string, Value> object;
+    typedef linked_hash_map<std::string, Value> object;
     Value() : storage(), type(ValueType::null_type) {}
     ~Value() {
 //      switch (type) {
@@ -437,5 +497,15 @@ namespace tinyjson {
 
     value.set_value(root);
     return true;
+  }
+
+  bool parseJsonFromFile(Value& value, const std::string& path) {
+    std::string json_str;
+    bool res = read_file(path, json_str);
+    if (res) {
+      return parseJson(value, json_str);
+    }
+
+    return false;
   }
 }
