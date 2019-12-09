@@ -5,7 +5,7 @@ int main() {
   tinyjson::Value value;
   StopWatch watch;
   std::string json;
-  bool res = tinyjson::read_file("../sample2.json", json);
+  bool res = tinyjson::read_file("../sample5.json", json);
   if (!res) return -1;
   watch.start();
   res = tinyjson::parseJson(value, json);
