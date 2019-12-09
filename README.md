@@ -1,11 +1,16 @@
 ### tinyjson
 
-tiny header only json parser
-
+blazing fast header only json parser
 
 ### TODO
 
-- unordered_map to ordered
-- utf8 support
 - array support
-- pretty print refactoring
+- utf8 support
+- user interface (value iterator)
+- various source (file, http, string)
+
+### DONE
+
+- ordered map
+- parse double with minimal precision problem
+- pretty print
