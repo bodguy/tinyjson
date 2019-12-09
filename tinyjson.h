@@ -9,10 +9,11 @@
 #include <sstream>
 #include <fstream>
 
-#define IS_DIGIT(x) \
-  (static_cast<unsigned int>((x) - '0') < static_cast<unsigned int>(10))
-
 namespace tinyjson {
+  constexpr bool is_digit(char x) {
+    return static_cast<unsigned int>((x) - '0') < static_cast<unsigned int>(10);
+  }
+
   // https://stackoverflow.com/questions/2602013/read-whole-ascii-file-into-c-stdstring
   bool read_file(const std::string& path, std::string& json_str) {
     std::ifstream ifs(path);
@@ -83,6 +84,24 @@ namespace tinyjson {
     array_type,
     object_type
   };
+
+  enum class TokenType {
+    start_object = '{',
+    end_object = '}',
+    start_array = '[',
+    end_array = ']',
+    double_quote = '\"',
+    start_value = ':',
+    comma_separator = ','
+  };
+
+  inline bool operator==(const char a, const TokenType b) {
+    return static_cast<TokenType>(a) == b;
+  }
+
+  inline bool operator!=(const char a, const TokenType b) {
+    return static_cast<TokenType>(a) != b;
+  }
 
   // https://stackoverflow.com/questions/2302969/convert-a-float-to-a-string
   static double PRECISION = 0.00000000000001;
@@ -199,7 +218,7 @@ namespace tinyjson {
         // accept. Somethig like `.7e+2`, `-.5234`
         leading_decimal_dots = true;
       }
-    } else if (IS_DIGIT(*curr)) { /* Pass through. */
+    } else if (is_digit(*curr)) { /* Pass through. */
     } else if (*curr == '.') {
       // accept. Somethig like `.7e+2`, `-.5234`
       leading_decimal_dots = true;
@@ -210,7 +229,7 @@ namespace tinyjson {
     // Read the integer part.
     end_not_reached = (curr != s_end);
     if (!leading_decimal_dots) {
-      while (end_not_reached && IS_DIGIT(*curr)) {
+      while (end_not_reached && is_digit(*curr)) {
         mantissa *= 10;
         mantissa += static_cast<int>(*curr - 0x30);
         curr++;
@@ -230,7 +249,7 @@ namespace tinyjson {
       curr++;
       read = 1;
       end_not_reached = (curr != s_end);
-      while (end_not_reached && IS_DIGIT(*curr)) {
+      while (end_not_reached && is_digit(*curr)) {
         static const double pow_lut[] = {
                 1.0, 0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001, 0.0000001,
         };
@@ -258,7 +277,7 @@ namespace tinyjson {
       if (end_not_reached && (*curr == '+' || *curr == '-')) {
         exp_sign = *curr;
         curr++;
-      } else if (IS_DIGIT(*curr)) { /* Pass through. */
+      } else if (is_digit(*curr)) { /* Pass through. */
       } else {
         // Empty E is not allowed.
         goto fail;
@@ -266,7 +285,7 @@ namespace tinyjson {
 
       read = 0;
       end_not_reached = (curr != s_end);
-      while (end_not_reached && IS_DIGIT(*curr)) {
+      while (end_not_reached && is_digit(*curr)) {
         exponent *= 10;
         exponent += static_cast<int>(*curr - 0x30);
         curr++;
@@ -486,7 +505,7 @@ namespace tinyjson {
       double value;
       if (!atod((*token), end, &value)) return false;
       (*number) = value;
-      if (end[0] == ',') {
+      if (end[0] == TokenType::comma_separator) {
         end++;
       }
       (*token) = end;
@@ -513,11 +532,9 @@ namespace tinyjson {
   }
 
   bool parseValue(Value& value, const char** token) {
-    if ((*token)[0] == '\"') {
+    if ((*token)[0] == TokenType::double_quote) {
       // string
       (*token)++;
-      // empty string is not allowed
-      if ((*token)[0] == '\"') return false;
       std::string str_value = parseString(token);
       value.set_value(str_value);
     } else if (0 == strncmp((*token), "true", 4)) {
@@ -538,7 +555,7 @@ namespace tinyjson {
       value.set_value(number);
     }
 
-    if ((*token)[0] == ',') {
+    if ((*token)[0] == TokenType::comma_separator) {
       (*token)++;
     }
 
@@ -555,48 +572,44 @@ namespace tinyjson {
       if ((*token) == nullptr) return false;
 
       // end of object
-      if ((*token)[0] == '}') {
+      if ((*token)[0] == TokenType::end_object) {
         (*token)++;
         break;
       }
 
       // start of key
-      if ((*token)[0] == '\"') {
+      if ((*token)[0] == TokenType::double_quote) {
         (*token)++;
-        // empty string is not allowed
-        if ((*token)[0] == '\"') return false;
+        // empty key is not allowed
+        if ((*token)[0] == TokenType::double_quote) return false;
         current_key = parseString(token);
         // no key found
         if (current_key.empty()) return false;
-        if ((*token)[0] == ',') token++;
+        if ((*token)[0] == TokenType::comma_separator) token++;
         continue;
       }
 
       // start of value
-      if ((*token)[0] == ':') {
+      if ((*token)[0] == TokenType::start_value) {
         (*token)++;
         (*token) += strspn((*token), " \t\n\r");
+
         Value current_value;
-        // another object
-        if ((*token)[0] == '{') {
+        if ((*token)[0] == TokenType::start_object) {
           (*token)++;
-          if (parseObject(current_value, token)) {
-            root.insert(std::make_pair(current_key, current_value));
-          } else {
-            return false;
-          }
+          if (!parseObject(current_value, token)) return false;
+          root.insert(std::make_pair(current_key, current_value));
+        } else if ((*token)[0] == TokenType::start_array) {
+
         } else {
-          if (parseValue(current_value, token)) {
-            root.insert(std::make_pair(current_key, current_value));
-          } else {
-            return false;
-          }
+          if (!parseValue(current_value, token)) return false;
+          root.insert(std::make_pair(current_key, current_value));
         }
         continue;
       }
     }
 
-    if ((*token)[0] == ',') {
+    if ((*token)[0] == TokenType::comma_separator) {
       (*token)++;
     }
 
@@ -613,48 +626,39 @@ namespace tinyjson {
       if ((*token) == nullptr) return false;
 
       // end of array
-      if ((*token)[0] == ']') {
+      if ((*token)[0] == TokenType::end_array) {
         (*token)++;
         break;
       }
 
-      if ((*token)[0] == ',') {
+      if ((*token)[0] == TokenType::comma_separator) {
         (*token)++;
       }
 
-      if ((*token)[0] == '{') {
+      if ((*token)[0] == TokenType::start_object) {
         (*token)++;
         (*token) += strspn((*token), " \t\n\r");
         Value current_obj;
-        if (parseObject(current_obj, token)) {
-          root.emplace_back(current_obj);
-        } else {
-          return false;
-        }
+        if (!parseObject(current_obj, token)) return false;
+        root.emplace_back(current_obj);
         continue;
-      } else if ((*token)[0] == '[') {
+      } else if ((*token)[0] == TokenType::start_array) {
         (*token)++;
         (*token) += strspn((*token), " \t\n\r");
         Value current_arr;
-        if (parseArray(current_arr, token)) {
-          root.emplace_back(current_arr);
-        } else {
-          return false;
-        }
+        if (!parseArray(current_arr, token)) return false;
+        root.emplace_back(current_arr);
         continue;
       } else {
         (*token) += strspn((*token), " \t\n\r");
         Value current_value;
-        if (parseValue(current_value, token)) {
-          root.push_back(current_value);
-        } else {
-          return false;
-        }
+        if (!parseValue(current_value, token)) return false;
+        root.push_back(current_value);
         continue;
       }
     }
 
-    if ((*token)[0] == ',') {
+    if ((*token)[0] == TokenType::comma_separator) {
       (*token)++;
     }
 
@@ -674,59 +678,53 @@ namespace tinyjson {
       if (token == nullptr) return false;
 
       // start of object
-      if (token[0] == '{') {
+      if (token[0] == TokenType::start_object) {
         start_of_object = true;
         token++;
         token += strspn(token, " \t\n\r");
-        // empty {} json
-        if (token[0] == '}') return true;
+        // empty {} object
+        if (token[0] == TokenType::end_object) return true;
         continue;
       }
 
       // end of json
-      if (token[0] == '}') {
-        if (start_of_object) {
-          start_of_object = !start_of_object;
-          token++;
-        } else {
-          return false;
-        }
+      if (token[0] == TokenType::end_object) {
+        if (!start_of_object) return false;
+        start_of_object = !start_of_object;
+        token++;
         continue;
       }
 
       // start of key
-      if (token[0] == '\"') {
+      if (token[0] == TokenType::double_quote) {
         token++;
         // empty string is not allowed
-        if (token[0] == '\"') return false;
+        if (token[0] == TokenType::double_quote) return false;
         current_key = parseString(&token);
         // no key found
         if (current_key.empty()) return false;
-        if (token[0] == ',') token++;
+        if (token[0] == TokenType::comma_separator) token++;
         continue;
       }
 
       // start of value
-      if (token[0] == ':' && start_of_object) {
+      if (token[0] == TokenType::start_value && start_of_object) {
         token++;
         token += strspn(token, " \t\n\r");
 
-        if (token[0] == '{') {
+        if (token[0] == TokenType::start_object) {
           token++;
           Value obj_val;
-          if (!parseObject(obj_val, &token))
-            return false;
+          if (!parseObject(obj_val, &token)) return false;
           root.insert(std::make_pair(current_key, obj_val));
-        } else if (token[0] == '[') {
+        } else if (token[0] == TokenType::start_array) {
           token++;
           Value array_val;
-          if (!parseArray(array_val, &token))
-            return false;
+          if (!parseArray(array_val, &token)) return false;
           root.insert(std::make_pair(current_key, array_val));
         } else {
           Value current_value;
-          if (!parseValue(current_value, &token))
-            return false;
+          if (!parseValue(current_value, &token)) return false;
           root.insert(std::make_pair(current_key, current_value));
         }
 
