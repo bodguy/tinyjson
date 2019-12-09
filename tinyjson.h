@@ -208,7 +208,15 @@ namespace tinyjson {
       return sstream.str();
     }
 
-    std::string pretty(unsigned int indent = 1, bool has_next = true) const {
+    std::string write(bool pretty = false) {
+      if (pretty) {
+        return "{\n" + pretty_print() + "\n}";
+      } else {
+        return "{" + print() + "}";
+      }
+    }
+
+    std::string print(bool has_next = true) const {
       std::stringstream sstream;
       std::string delim;
 
@@ -216,8 +224,53 @@ namespace tinyjson {
         delim = ',';
       }
 
-      if (indent == 1) {
-        sstream << "{\n";
+      switch (type) {
+        case ValueType::string_type:
+          sstream << '\"' << *(storage.str_val) << '\"' << delim;
+          break;
+        case ValueType::object_type: {
+          for (auto iter = storage.object_val->cbegin(); iter != storage.object_val->cend(); iter++) {
+            sstream << "\"" << iter->first << "\":";
+            if (iter->second.type == ValueType::object_type) {
+              sstream << '{';
+            }
+            auto iterCopy = iter;
+            bool next = false;
+            if (++iterCopy != storage.object_val->cend()) {
+              next = true;
+            }
+            sstream << iter->second.print(next);
+            if (iter->second.type == ValueType::object_type) {
+              sstream << '}' << (next ? "," : "");
+            }
+          }
+          break;
+        }
+        case ValueType::array_type:
+          sstream << "array" << delim;
+          break;
+        case ValueType::null_type:
+          sstream << "null" << delim;
+          break;
+        case ValueType::number_type: {
+          char buf[MAX_NUMBER_STRING_SIZE];
+          sstream << std::string(dtoa(buf, storage.num_val)) << delim;
+          break;
+        }
+        case ValueType::boolean_type:
+          sstream << (storage.bool_val ? "true" : "false") << delim;
+          break;
+      }
+
+      return sstream.str();
+    }
+
+    std::string pretty_print(unsigned int indent = 1, bool has_next = true) const {
+      std::stringstream sstream;
+      std::string delim;
+
+      if (has_next) {
+        delim = ',';
       }
 
       switch (type) {
@@ -243,7 +296,7 @@ namespace tinyjson {
             if (++iterCopy != storage.object_val->cend()) {
               next = true;
             }
-            sstream << iter->second.pretty(indent + 1, next);
+            sstream << iter->second.pretty_print(indent + 1, next);
             if (iter->second.type == ValueType::object_type) {
               if (!iter->second.storage.object_val->empty()) {
                 sstream << '\n' << space;
@@ -267,10 +320,6 @@ namespace tinyjson {
         case ValueType::boolean_type:
           sstream << (storage.bool_val ? "true" : "false") << delim;
           break;
-      }
-
-      if (indent == 1) {
-        sstream << "\n}";
       }
 
       return sstream.str();
