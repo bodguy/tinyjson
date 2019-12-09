@@ -436,9 +436,13 @@ namespace tinyjson {
           }
           break;
         }
-        case ValueType::array_type:
-          sstream << "array" << delim;
+        case ValueType::array_type: {
+          std::string space = indentation(indent);
+          for (auto iter = storage.array_val->cbegin(); iter != storage.array_val->cend(); iter++) {
+            sstream << "array" << delim;
+          }
           break;
+        }
         case ValueType::null_type:
           sstream << "null" << delim;
           break;
@@ -515,8 +519,6 @@ namespace tinyjson {
       // empty string is not allowed
       if ((*token)[0] == '\"') return false;
       std::string str_value = parseString(token);
-      // no key found
-      if (str_value.empty()) return false;
       value.set_value(str_value);
     } else if (0 == strncmp((*token), "true", 4)) {
       // boolean true
@@ -616,25 +618,37 @@ namespace tinyjson {
         break;
       }
 
-      // start of value
-      if ((*token)[0] == ':') {
+      if ((*token)[0] == ',') {
+        (*token)++;
+      }
+
+      if ((*token)[0] == '{') {
         (*token)++;
         (*token) += strspn((*token), " \t\n\r");
-        Value current_value;
-        // another object
-        if ((*token)[0] == '{') {
-          (*token)++;
-          if (parseObject(current_value, token)) {
-            root.push_back(current_value);
-          } else {
-            return false;
-          }
+        Value current_obj;
+        if (parseObject(current_obj, token)) {
+          root.emplace_back(current_obj);
         } else {
-          if (parseValue(current_value, token)) {
-            root.push_back(current_value);
-          } else {
-            return false;
-          }
+          return false;
+        }
+        continue;
+      } else if ((*token)[0] == '[') {
+        (*token)++;
+        (*token) += strspn((*token), " \t\n\r");
+        Value current_arr;
+        if (parseArray(current_arr, token)) {
+          root.emplace_back(current_arr);
+        } else {
+          return false;
+        }
+        continue;
+      } else {
+        (*token) += strspn((*token), " \t\n\r");
+        Value current_value;
+        if (parseValue(current_value, token)) {
+          root.push_back(current_value);
+        } else {
+          return false;
         }
         continue;
       }
