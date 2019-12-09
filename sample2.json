@@ -10,25 +10,25 @@
   "backoffSeconds": 1,
   "container": {
     "portMappings": {
+      "containerPort": 8080,
+      "hostPort": 0,
+      "protocol": "tcp",
+      "portMappings": {
         "containerPort": 8080,
         "hostPort": 0,
         "protocol": "tcp",
-        "portMappings": {
-          "containerPort": 8080,
-          "hostPort": 0,
+        "servicePort": {
+          "name": "batch",
           "protocol": "tcp",
-          "servicePort": {
+          "hostPort": {
             "name": "batch",
-            "protocol": "tcp",
-            "hostPort": {
-              "name": "batch",
-              "protocol": "tcp"
-            }
-          },
-          "name": "batch"
+            "protocol": "tcp"
+          }
         },
-        "servicePort": 10120,
         "name": "batch"
+      },
+      "servicePort": 10120,
+      "name": "batch"
     },
     "type": "DOCKER",
     "docker": {
@@ -40,28 +40,28 @@
   "cpus": 1,
   "disk": 0,
   "fetch": {
-      "uri": "tar.gz",
-      "extract": true,
-      "executable": false,
-      "cache": false
+    "uri": "tar.gz",
+    "extract": true,
+    "executable": false,
+    "cache": false
   },
   "healthChecks": {
-      "gracePeriodSeconds": 300,
-      "intervalSeconds": 60,
-      "maxConsecutiveFailures": 3,
-      "portIndex": 0,
-      "timeoutSeconds": 20,
-      "delaySeconds": 15,
-      "protocol": "HTTP",
-      "path": "health",
-      "ipProtocol": "IPv4"
+    "gracePeriodSeconds": 300,
+    "intervalSeconds": 60,
+    "maxConsecutiveFailures": 3,
+    "portIndex": 0,
+    "timeoutSeconds": 20,
+    "delaySeconds": 15,
+    "protocol": "HTTP",
+    "path": "health",
+    "ipProtocol": "IPv4"
   },
   "instances": 2,
   "maxLaunchDelaySeconds": 3600,
   "mem": 4096,
   "gpus": 0,
   "networks": {
-      "mode": "container/bridge"
+    "mode": "container/bridge"
   },
   "requirePorts": false,
   "upgradeStrategy": {

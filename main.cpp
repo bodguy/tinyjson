@@ -4,14 +4,17 @@
 int main() {
   tinyjson::Value value;
   StopWatch watch;
+  std::string json;
+  bool res = tinyjson::read_file("../sample2.json", json);
+  if (!res) return -1;
   watch.start();
-  bool res = parseJsonFromFile(value, "../sample2.json");
+  res = tinyjson::parseJson(value, json);
   watch.stop();
-  float elapsed = watch.milli();
+  float elapsed = watch.milli() / 1000.f;
   if (!res) {
     std::cout << "parse failed" << '\n';
   } else {
-    std::cout << "time elapsed: " << elapsed << std::endl;
+    std::cout << "time elapsed: " << elapsed << " sec" << std::endl;
     std::cout << value.pretty() << std::endl;
   }
 
