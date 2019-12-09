@@ -4,7 +4,11 @@
       "key": "value"
     },
     {
-      "key": "value"
+      "key": "value",
+      "key2": 1.15,
+      "arr2": [
+        1,2,3,4
+      ]
     }
   ]
 }

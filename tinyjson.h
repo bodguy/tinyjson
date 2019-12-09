@@ -439,7 +439,7 @@ namespace tinyjson {
         case ValueType::array_type: {
           std::string space = indentation(indent);
           for (auto iter = storage.array_val->cbegin(); iter != storage.array_val->cend(); iter++) {
-            sstream << "array" << delim;
+            sstream << iter->pretty_print(indent + 1, has_next) << delim;
           }
           break;
         }
