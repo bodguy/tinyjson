@@ -471,8 +471,9 @@ namespace tinyjson {
 
   bool parseNumber(const char** token, double* number);
   std::string parseString(const char** token);
-  bool parseValue(const char** token, Value& val, const std::string& key);
-  bool parseObject(Value& value, const char** token, const std::string& key);
+  bool parseValue(Value& value, const char** token);
+  bool parseObject(Value& value, const char** token);
+  bool parseArray(Value& value, const char** token);
 
   bool parseNumber(const char** token, double* number) {
     (*token) += strspn((*token), " \t");
@@ -507,7 +508,7 @@ namespace tinyjson {
     return key;
   }
 
-  bool parseValue(const char** token, Value& val, const std::string& key) {
+  bool parseValue(Value& value, const char** token) {
     if ((*token)[0] == '\"') {
       // string
       (*token)++;
@@ -516,17 +517,14 @@ namespace tinyjson {
       std::string str_value = parseString(token);
       // no key found
       if (str_value.empty()) return false;
-      val.set_value(str_value);
-    } else if ((*token)[0] == '[') {
-      // array
-      (*token)++;
+      value.set_value(str_value);
     } else if (0 == strncmp((*token), "true", 4)) {
       // boolean true
-      val.set_value(true);
+      value.set_value(true);
       (*token) += 4;
     } else if (0 == strncmp((*token), "false", 5)) {
       // boolean false
-      val.set_value(false);
+      value.set_value(false);
       (*token) += 5;
     } else if (0 == strncmp((*token), "null", 4)) {
       // null
@@ -535,7 +533,7 @@ namespace tinyjson {
       // number
       double number = 0.0;
       if (!parseNumber(token, &number)) return false;
-      val.set_value(number);
+      value.set_value(number);
     }
 
     if ((*token)[0] == ',') {
@@ -545,7 +543,7 @@ namespace tinyjson {
     return true;
   }
 
-  bool parseObject(Value& val, const char** token, const std::string& key) {
+  bool parseObject(Value& value, const char** token) {
     std::string current_key;
     object root;
 
@@ -580,13 +578,13 @@ namespace tinyjson {
         // another object
         if ((*token)[0] == '{') {
           (*token)++;
-          if (parseObject(current_value, token, current_key)) {
+          if (parseObject(current_value, token)) {
             root.insert(std::make_pair(current_key, current_value));
           } else {
             return false;
           }
         } else {
-          if (parseValue(token, current_value, key)) {
+          if (parseValue(current_value, token)) {
             root.insert(std::make_pair(current_key, current_value));
           } else {
             return false;
@@ -600,12 +598,54 @@ namespace tinyjson {
       (*token)++;
     }
 
-    val.set_value(root);
+    value.set_value(root);
     return true;
   }
 
-  bool parseArray(Value& val, const char** token, const std::string& key) {
-    return false;
+  bool parseArray(Value& value, const char** token) {
+    array root;
+
+    while ((*token)[0]) {
+      (*token) += strspn((*token), " \t\n\r");
+
+      if ((*token) == nullptr) return false;
+
+      // end of array
+      if ((*token)[0] == ']') {
+        (*token)++;
+        break;
+      }
+
+      // start of value
+      if ((*token)[0] == ':') {
+        (*token)++;
+        (*token) += strspn((*token), " \t\n\r");
+        Value current_value;
+        // another object
+        if ((*token)[0] == '{') {
+          (*token)++;
+          if (parseObject(current_value, token)) {
+            root.push_back(current_value);
+          } else {
+            return false;
+          }
+        } else {
+          if (parseValue(current_value, token)) {
+            root.push_back(current_value);
+          } else {
+            return false;
+          }
+        }
+        continue;
+      }
+    }
+
+    if ((*token)[0] == ',') {
+      (*token)++;
+    }
+
+    value.set_value(root);
+    return true;
   }
 
   bool parseJson(Value& value, const std::string& json) {
@@ -657,22 +697,21 @@ namespace tinyjson {
         token++;
         token += strspn(token, " \t\n\r");
 
-        // check is object
         if (token[0] == '{') {
           token++;
           Value obj_val;
-          if (!parseObject(obj_val, &token, current_key))
+          if (!parseObject(obj_val, &token))
             return false;
           root.insert(std::make_pair(current_key, obj_val));
-        } else if (token[0] == '[') { // check is array
+        } else if (token[0] == '[') {
           token++;
           Value array_val;
-          if (!parseArray(array_val, &token, current_key))
+          if (!parseArray(array_val, &token))
             return false;
           root.insert(std::make_pair(current_key, array_val));
         } else {
           Value current_value;
-          if (!parseValue(&token, current_value, current_key))
+          if (!parseValue(current_value, &token))
             return false;
           root.insert(std::make_pair(current_key, current_value));
         }
