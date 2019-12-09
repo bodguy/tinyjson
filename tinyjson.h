@@ -9,6 +9,9 @@
 #include <sstream>
 #include <fstream>
 
+#define IS_DIGIT(x) \
+  (static_cast<unsigned int>((x) - '0') < static_cast<unsigned int>(10))
+
 namespace tinyjson {
   // https://stackoverflow.com/questions/2602013/read-whole-ascii-file-into-c-stdstring
   bool read_file(const std::string& path, std::string& json_str) {
@@ -84,7 +87,7 @@ namespace tinyjson {
   // https://stackoverflow.com/questions/2302969/convert-a-float-to-a-string
   static double PRECISION = 0.00000000000001;
   static int MAX_NUMBER_STRING_SIZE = 32;
-  char * dtoa(char *s, double n) {
+  static char * dtoa(char *s, double n) {
     // handle special cases
     if (std::isnan(n)) {
       strcpy(s, "nan");
@@ -154,6 +157,133 @@ namespace tinyjson {
       *(c) = '\0';
     }
     return s;
+  }
+
+  // https://github.com/syoyo/tinyobjloader/blob/master/tiny_obj_loader.h
+  static bool atod(const char *s, const char *s_end, double *result) {
+    if (s >= s_end) {
+      return false;
+    }
+
+    double mantissa = 0.0;
+    // This exponent is base 2 rather than 10.
+    // However the exponent we parse is supposed to be one of ten,
+    // thus we must take care to convert the exponent/and or the
+    // mantissa to a * 2^E, where a is the mantissa and E is the
+    // exponent.
+    // To get the final double we will use ldexp, it requires the
+    // exponent to be in base 2.
+    int exponent = 0;
+
+    // NOTE: THESE MUST BE DECLARED HERE SINCE WE ARE NOT ALLOWED
+    // TO JUMP OVER DEFINITIONS.
+    char sign = '+';
+    char exp_sign = '+';
+    char const *curr = s;
+
+    // How many characters were read in a loop.
+    int read = 0;
+    // Tells whether a loop terminated due to reaching s_end.
+    bool end_not_reached = false;
+    bool leading_decimal_dots = false;
+
+    /*
+            BEGIN PARSING.
+    */
+
+    // Find out what sign we've got.
+    if (*curr == '+' || *curr == '-') {
+      sign = *curr;
+      curr++;
+      if ((curr != s_end) && (*curr == '.')) {
+        // accept. Somethig like `.7e+2`, `-.5234`
+        leading_decimal_dots = true;
+      }
+    } else if (IS_DIGIT(*curr)) { /* Pass through. */
+    } else if (*curr == '.') {
+      // accept. Somethig like `.7e+2`, `-.5234`
+      leading_decimal_dots = true;
+    } else {
+      goto fail;
+    }
+
+    // Read the integer part.
+    end_not_reached = (curr != s_end);
+    if (!leading_decimal_dots) {
+      while (end_not_reached && IS_DIGIT(*curr)) {
+        mantissa *= 10;
+        mantissa += static_cast<int>(*curr - 0x30);
+        curr++;
+        read++;
+        end_not_reached = (curr != s_end);
+      }
+
+      // We must make sure we actually got something.
+      if (read == 0) goto fail;
+    }
+
+    // We allow numbers of form "#", "###" etc.
+    if (!end_not_reached) goto assemble;
+
+    // Read the decimal part.
+    if (*curr == '.') {
+      curr++;
+      read = 1;
+      end_not_reached = (curr != s_end);
+      while (end_not_reached && IS_DIGIT(*curr)) {
+        static const double pow_lut[] = {
+                1.0, 0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001, 0.0000001,
+        };
+        const int lut_entries = sizeof pow_lut / sizeof pow_lut[0];
+
+        // NOTE: Don't use powf here, it will absolutely murder precision.
+        mantissa += static_cast<int>(*curr - 0x30) *
+                    (read < lut_entries ? pow_lut[read] : std::pow(10.0, -read));
+        read++;
+        curr++;
+        end_not_reached = (curr != s_end);
+      }
+    } else if (*curr == 'e' || *curr == 'E') {
+    } else {
+      goto assemble;
+    }
+
+    if (!end_not_reached) goto assemble;
+
+    // Read the exponent part.
+    if (*curr == 'e' || *curr == 'E') {
+      curr++;
+      // Figure out if a sign is present and if it is.
+      end_not_reached = (curr != s_end);
+      if (end_not_reached && (*curr == '+' || *curr == '-')) {
+        exp_sign = *curr;
+        curr++;
+      } else if (IS_DIGIT(*curr)) { /* Pass through. */
+      } else {
+        // Empty E is not allowed.
+        goto fail;
+      }
+
+      read = 0;
+      end_not_reached = (curr != s_end);
+      while (end_not_reached && IS_DIGIT(*curr)) {
+        exponent *= 10;
+        exponent += static_cast<int>(*curr - 0x30);
+        curr++;
+        read++;
+        end_not_reached = (curr != s_end);
+      }
+      exponent *= (exp_sign == '+' ? 1 : -1);
+      if (read == 0) goto fail;
+    }
+
+    assemble:
+    *result = (sign == '+' ? 1 : -1) *
+              (exponent ? std::ldexp(mantissa * std::pow(5.0, exponent), exponent)
+                        : mantissa);
+    return true;
+    fail:
+    return false;
   }
 
   struct Value {
@@ -347,14 +477,10 @@ namespace tinyjson {
   bool parseNumber(const char** token, double* number) {
     (*token) += strspn((*token), " \t");
     const char* end = (*token) + strcspn((*token), " \t,\n\r}");
-    size_t offset = end - (*token);
-    if (offset != 0) {
-      char* dest = (char*)malloc(sizeof(char) * offset + 1);
-      strncpy(dest, (*token), offset);
-      *(dest + offset) = 0;
-      double value = (double)atof(dest); // @TODO: this should be replaced with custom atod function
+    if (end != (*token)) {
+      double value;
+      if (!atod((*token), end, &value)) return false;
       (*number) = value;
-      free(dest);
       if (end[0] == ',') {
         end++;
       }
