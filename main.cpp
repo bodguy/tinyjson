@@ -1,33 +1,21 @@
 #include "tinyjson.h"
-#include <fstream>
-
-// https://stackoverflow.com/questions/2602013/read-whole-ascii-file-into-c-stdstring
-bool read_json_from_file(const std::string& path, std::string& json_str) {
-  std::ifstream ifs(path);
-  if(!ifs) {
-    return false;
-  }
-
-  ifs.seekg(0, std::ios::end);
-  json_str.reserve(ifs.tellg());
-  ifs.seekg(0, std::ios::beg);
-
-  json_str.assign((std::istreambuf_iterator<char>(ifs)),
-             std::istreambuf_iterator<char>());
-  return true;
-}
+#include "utils.h"
 
 int main() {
-  tinyjson::Value val;
-  std::string json_str;
-  read_json_from_file("../sample2.json", json_str);
-  bool res = parseJson(val, json_str);
+  tinyjson::Value value;
+  StopWatch watch;
+  std::string json;
+  bool res = tinyjson::read_file("../sample5.json", json);
+  if (!res) return -1;
+  watch.start();
+  res = tinyjson::parseJson(value, json);
+  watch.stop();
+  float elapsed = watch.milli() / 1000.f;
   if (!res) {
     std::cout << "parse failed" << '\n';
   } else {
-    for (auto iter : *(val.storage.object_val)) {
-      std::cout << iter.first << " : " << iter.second.to_str() << std::endl;
-    }
+    std::cout << "time elapsed: " << elapsed << " sec" << std::endl;
+    std::cout << value.write(true) << std::endl;
   }
 
   return 0;

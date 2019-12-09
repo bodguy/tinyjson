@@ -2,7 +2,12 @@
 
 !/main.cpp
 !/tinyjson.h
+!/utils.h
 !/sample.json
+!/sample2.json
+!/sample3.json
+!/sample4.json
+!/sample5.json
 !/CMakeLists.txt
 !/README.md
 !/.gitignore
