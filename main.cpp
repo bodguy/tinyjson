@@ -10,11 +10,11 @@ int main() {
   watch.start();
   res = tinyjson::parseJson(value, json);
   watch.stop();
-  float elapsed = watch.milli() / 1000.f;
+  float elapsed = watch.milli();
   if (!res) {
     std::cout << "parse failed" << '\n';
   } else {
-    std::cout << "time elapsed: " << elapsed << " sec" << std::endl;
+    std::cout << "time elapsed: " << elapsed << " ms" << std::endl;
     std::cout << value.write(true) << std::endl;
   }
 

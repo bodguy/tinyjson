@@ -457,6 +457,7 @@ namespace tinyjson {
         }
         case ValueType::array_type: {
           std::string space = indentation(indent);
+          // @TODO
           for (auto iter = storage.array_val->cbegin(); iter != storage.array_val->cend(); iter++) {
             sstream << iter->pretty_print(indent + 1, has_next) << delim;
           }
@@ -589,7 +590,6 @@ namespace tinyjson {
         continue;
       }
 
-      // start of value
       if ((*token)[0] == TokenType::start_value) {
         (*token)++;
         (*token) += strspn((*token), " \t\n\r");
@@ -598,13 +598,14 @@ namespace tinyjson {
         if ((*token)[0] == TokenType::start_object) {
           (*token)++;
           if (!parseObject(current_value, token)) return false;
-          root.insert(std::make_pair(current_key, current_value));
         } else if ((*token)[0] == TokenType::start_array) {
-
+          (*token)++;
+          if (!parseArray(current_value, token)) return false;
         } else {
           if (!parseValue(current_value, token)) return false;
-          root.insert(std::make_pair(current_key, current_value));
         }
+        root.insert(std::make_pair(current_key, current_value));
+
         continue;
       }
     }
@@ -653,7 +654,7 @@ namespace tinyjson {
         (*token) += strspn((*token), " \t\n\r");
         Value current_value;
         if (!parseValue(current_value, token)) return false;
-        root.push_back(current_value);
+        root.emplace_back(current_value);
         continue;
       }
     }
@@ -712,21 +713,17 @@ namespace tinyjson {
         token++;
         token += strspn(token, " \t\n\r");
 
+        Value current_value;
         if (token[0] == TokenType::start_object) {
           token++;
-          Value obj_val;
-          if (!parseObject(obj_val, &token)) return false;
-          root.insert(std::make_pair(current_key, obj_val));
+          if (!parseObject(current_value, &token)) return false;
         } else if (token[0] == TokenType::start_array) {
           token++;
-          Value array_val;
-          if (!parseArray(array_val, &token)) return false;
-          root.insert(std::make_pair(current_key, array_val));
+          if (!parseArray(current_value, &token)) return false;
         } else {
-          Value current_value;
           if (!parseValue(current_value, &token)) return false;
-          root.insert(std::make_pair(current_key, current_value));
         }
+        root.insert(std::make_pair(current_key, current_value));
 
         continue;
       }
