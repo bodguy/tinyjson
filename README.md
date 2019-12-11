@@ -1,10 +1,9 @@
 ### tinyjson
 
-blazing fast header only json parser
+Blazing fast header only json parser
 
 ### TODO
 
-- array support
 - utf8 support
 - user interface (value iterator)
 - various source (file, http, string)
@@ -14,3 +13,5 @@ blazing fast header only json parser
 - ordered map
 - parse double with minimal precision problem
 - pretty print
+- object parsing
+- array parsing
