@@ -15,7 +15,7 @@ int main() {
     std::cout << "parse failed" << '\n';
   } else {
     std::cout << "time elapsed: " << elapsed << " ms" << std::endl;
-    std::cout << value.write(true) << std::endl;
+    std::cout << value.print(true) << std::endl;
   }
 
   return 0;

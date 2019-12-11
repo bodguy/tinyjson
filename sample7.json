@@ -1,134 +1,134 @@
 {
-  "took" : 26,
-  "timed_out" : false,
-  "_shards" : {
-    "total" : 9,
-    "successful" : 9,
-    "skipped" : 0,
-    "failed" : 0
+  "took": 26,
+  "timed_out": false,
+  "_shards": {
+    "total": 9,
+    "successful": 9,
+    "skipped": 0,
+    "failed": 0
   },
-  "hits" : {
-    "total" : 20001170,
-    "max_score" : 1.0,
-    "hits" : [
+  "hits": {
+    "total": 20001170,
+    "max_score": 1,
+    "hits": [
       {
-        "_index" : "suggest_issue",
-        "_type" : "autocomplete",
-        "_id" : "5Lge824BOBvbTnIjCPDF",
-        "_score" : 1.0,
-        "_source" : {
-          "keyword" : "원혜영",
-          "ranking" : 47.0,
-          "searchable" : true,
-          "timestamp" : 1576036862777
+        "_index": "suggest_issue",
+        "_type": "autocomplete",
+        "_id": "5Lge824BOBvbTnIjCPDF",
+        "_score": 1,
+        "_source": {
+          "keyword": "원혜영",
+          "ranking": 47,
+          "searchable": true,
+          "timestamp": 1576036862777
         }
       },
       {
-        "_index" : "suggest_issue",
-        "_type" : "autocomplete",
-        "_id" : "47ge824BOBvbTnIjCPDF",
-        "_score" : 1.0,
-        "_source" : {
-          "keyword" : "프레스티지",
-          "ranking" : 47.0,
-          "searchable" : true,
-          "timestamp" : 1576036862756
+        "_index": "suggest_issue",
+        "_type": "autocomplete",
+        "_id": "47ge824BOBvbTnIjCPDF",
+        "_score": 1,
+        "_source": {
+          "keyword": "프레스티지",
+          "ranking": 47,
+          "searchable": true,
+          "timestamp": 1576036862756
         }
       },
       {
-        "_index" : "suggest_issue",
-        "_type" : "autocomplete",
-        "_id" : "4rge824BOBvbTnIjCPDF",
-        "_score" : 1.0,
-        "_source" : {
-          "keyword" : "백재현",
-          "ranking" : 47.0,
-          "searchable" : true,
-          "timestamp" : 1576036862752
+        "_index": "suggest_issue",
+        "_type": "autocomplete",
+        "_id": "4rge824BOBvbTnIjCPDF",
+        "_score": 1,
+        "_source": {
+          "keyword": "백재현",
+          "ranking": 47,
+          "searchable": true,
+          "timestamp": 1576036862752
         }
       },
       {
-        "_index" : "suggest_issue",
-        "_type" : "autocomplete",
-        "_id" : "4bge824BOBvbTnIjCPDF",
-        "_score" : 1.0,
-        "_source" : {
-          "keyword" : "딕펑스 김현우",
-          "ranking" : 47.0,
-          "searchable" : true,
-          "timestamp" : 1576036862739
+        "_index": "suggest_issue",
+        "_type": "autocomplete",
+        "_id": "4bge824BOBvbTnIjCPDF",
+        "_score": 1,
+        "_source": {
+          "keyword": "딕펑스 김현우",
+          "ranking": 47,
+          "searchable": true,
+          "timestamp": 1576036862739
         }
       },
       {
-        "_index" : "suggest_issue",
-        "_type" : "autocomplete",
-        "_id" : "4Lge824BOBvbTnIjCPDF",
-        "_score" : 1.0,
-        "_source" : {
-          "keyword" : "디아더스",
-          "ranking" : 47.0,
-          "searchable" : true,
-          "timestamp" : 1576036862713
+        "_index": "suggest_issue",
+        "_type": "autocomplete",
+        "_id": "4Lge824BOBvbTnIjCPDF",
+        "_score": 1,
+        "_source": {
+          "keyword": "디아더스",
+          "ranking": 47,
+          "searchable": true,
+          "timestamp": 1576036862713
         }
       },
       {
-        "_index" : "suggest_issue",
-        "_type" : "autocomplete",
-        "_id" : "17gd824BOBvbTnIjGvAe",
-        "_score" : 1.0,
-        "_source" : {
-          "keyword" : "원혜영",
-          "ranking" : 47.0,
-          "searchable" : true,
-          "timestamp" : 1576036801900
+        "_index": "suggest_issue",
+        "_type": "autocomplete",
+        "_id": "17gd824BOBvbTnIjGvAe",
+        "_score": 1,
+        "_source": {
+          "keyword": "원혜영",
+          "ranking": 47,
+          "searchable": true,
+          "timestamp": 1576036801900
         }
       },
       {
-        "_index" : "suggest_issue",
-        "_type" : "autocomplete",
-        "_id" : "1rgd824BOBvbTnIjGvAe",
-        "_score" : 1.0,
-        "_source" : {
-          "keyword" : "백재현",
-          "ranking" : 47.0,
-          "searchable" : true,
-          "timestamp" : 1576036801891
+        "_index": "suggest_issue",
+        "_type": "autocomplete",
+        "_id": "1rgd824BOBvbTnIjGvAe",
+        "_score": 1,
+        "_source": {
+          "keyword": "백재현",
+          "ranking": 47,
+          "searchable": true,
+          "timestamp": 1576036801891
         }
       },
       {
-        "_index" : "suggest_issue",
-        "_type" : "autocomplete",
-        "_id" : "1bgd824BOBvbTnIjGvAe",
-        "_score" : 1.0,
-        "_source" : {
-          "keyword" : "프레스티지",
-          "ranking" : 47.0,
-          "searchable" : true,
-          "timestamp" : 1576036801887
+        "_index": "suggest_issue",
+        "_type": "autocomplete",
+        "_id": "1bgd824BOBvbTnIjGvAe",
+        "_score": 1,
+        "_source": {
+          "keyword": "프레스티지",
+          "ranking": 47,
+          "searchable": true,
+          "timestamp": 1576036801887
         }
       },
       {
-        "_index" : "suggest_issue",
-        "_type" : "autocomplete",
-        "_id" : "1Lgd824BOBvbTnIjGvAe",
-        "_score" : 1.0,
-        "_source" : {
-          "keyword" : "딕펑스 김현우",
-          "ranking" : 47.0,
-          "searchable" : true,
-          "timestamp" : 1576036801875
+        "_index": "suggest_issue",
+        "_type": "autocomplete",
+        "_id": "1Lgd824BOBvbTnIjGvAe",
+        "_score": 1,
+        "_source": {
+          "keyword": "딕펑스 김현우",
+          "ranking": 47,
+          "searchable": true,
+          "timestamp": 1576036801875
         }
       },
       {
-        "_index" : "suggest_issue",
-        "_type" : "autocomplete",
-        "_id" : "07gd824BOBvbTnIjGvAe",
-        "_score" : 1.0,
-        "_source" : {
-          "keyword" : "디아더스",
-          "ranking" : 47.0,
-          "searchable" : true,
-          "timestamp" : 1576036801848
+        "_index": "suggest_issue",
+        "_type": "autocomplete",
+        "_id": "07gd824BOBvbTnIjGvAe",
+        "_score": 1,
+        "_source": {
+          "keyword": "디아더스",
+          "ranking": 47,
+          "searchable": true,
+          "timestamp": 1576036801848
         }
       }
     ]

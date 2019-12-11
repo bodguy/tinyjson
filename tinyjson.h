@@ -10,6 +10,7 @@
 #include <fstream>
 
 namespace tinyjson {
+  constexpr unsigned int indent_size = 2;
   constexpr bool is_digit(char x) {
     return static_cast<unsigned int>((x) - '0') < static_cast<unsigned int>(10);
   }
@@ -349,130 +350,90 @@ namespace tinyjson {
       }
     }
 
-    static std::string indentation(unsigned int indent) {
+    static std::string make_indent(int indent) {
       std::stringstream sstream;
-      for (int i = 0; i < indent; i++) {
-        sstream << "  ";
+      sstream << '\n';
+      for (int i = 0; i < indent * indent_size; i++) {
+        sstream << ' ';
       }
       return sstream.str();
     }
 
-    std::string write(bool pretty = false) {
-      if (pretty) {
-        return "{\n" + pretty_print() + "\n}";
-      } else {
-        return "{" + print() + "}";
-      }
+    static std::string serialize_str(const std::string& str) {
+      return "\"" + str + "\"";
     }
 
-    std::string print(bool has_next = true) const {
-      std::stringstream sstream;
-      std::string delim;
+    std::string print(bool prettify = false) const {
+      return serialize(prettify ? 0 : -1);
+    }
 
-      if (has_next) {
-        delim = ',';
-      }
+    std::string serialize(int indent) const {
+      std::stringstream sstream;
 
       switch (type) {
         case ValueType::string_type:
-          sstream << '\"' << *(storage.str_val) << '\"' << delim;
+          sstream << serialize_str(*(storage.str_val));
           break;
         case ValueType::object_type: {
-          for (auto iter = storage.object_val->cbegin(); iter != storage.object_val->cend(); iter++) {
-            sstream << "\"" << iter->first << "\":";
-            if (iter->second.type == ValueType::object_type) {
-              sstream << '{';
+          sstream << '{';
+          if (indent != -1) {
+            ++indent;
+          }
+          for (auto citer = storage.object_val->cbegin(); citer != storage.object_val->cend(); ++citer) {
+            if (citer != storage.object_val->cbegin()) {
+              sstream << ',';
             }
-            auto iterCopy = iter;
-            bool next = false;
-            if (++iterCopy != storage.object_val->cend()) {
-              next = true;
+            if (indent != -1) {
+              sstream << make_indent(indent);
             }
-            sstream << iter->second.print(next);
-            if (iter->second.type == ValueType::object_type) {
-              sstream << '}' << (next ? "," : "");
+            sstream << serialize_str(citer->first) << ':';
+            if (indent != -1) {
+              sstream << ' ';
+            }
+            sstream << citer->second.serialize(indent);
+          }
+          if (indent != -1) {
+            --indent;
+            if (!storage.object_val->empty()) {
+              sstream << make_indent(indent);
             }
           }
-          break;
-        }
-        case ValueType::array_type:
-          sstream << "array" << delim;
-          break;
-        case ValueType::null_type:
-          sstream << "null" << delim;
-          break;
-        case ValueType::number_type: {
-          char buf[MAX_NUMBER_STRING_SIZE];
-          sstream << std::string(dtoa(buf, storage.num_val)) << delim;
-          break;
-        }
-        case ValueType::boolean_type:
-          sstream << (storage.bool_val ? "true" : "false") << delim;
-          break;
-      }
-
-      return sstream.str();
-    }
-
-    std::string pretty_print(unsigned int indent = 1, bool has_next = true) const {
-      std::stringstream sstream;
-      std::string delim;
-
-      if (has_next) {
-        delim = ',';
-      }
-
-      switch (type) {
-        case ValueType::string_type:
-          sstream << '\"' << *(storage.str_val) << '\"' << delim;
-          break;
-        case ValueType::object_type: {
-          std::string space = indentation(indent);
-          for (auto iter = storage.object_val->cbegin(); iter != storage.object_val->cend(); iter++) {
-            // prevent first newline
-            if (iter != storage.object_val->begin()) {
-              sstream << '\n';
-            }
-            sstream << space << "\"" << iter->first << "\": ";
-            if (iter->second.type == ValueType::object_type) {
-              sstream << '{';
-              if (!iter->second.storage.object_val->empty()) {
-                sstream << '\n';
-              }
-            }
-            auto iterCopy = iter;
-            bool next = false;
-            if (++iterCopy != storage.object_val->cend()) {
-              next = true;
-            }
-            sstream << iter->second.pretty_print(indent + 1, next);
-            if (iter->second.type == ValueType::object_type) {
-              if (!iter->second.storage.object_val->empty()) {
-                sstream << '\n' << space;
-              }
-              sstream << '}' << (next ? "," : "");
-            }
-          }
+          sstream << '}';
           break;
         }
         case ValueType::array_type: {
-          std::string space = indentation(indent);
-          // @TODO
-          for (auto iter = storage.array_val->cbegin(); iter != storage.array_val->cend(); iter++) {
-            sstream << iter->pretty_print(indent + 1, has_next) << delim;
+          sstream << '[';
+          if (indent != -1) {
+            ++indent;
           }
+          for (auto citer = storage.array_val->cbegin(); citer != storage.array_val->cend(); ++citer) {
+            if (citer != storage.array_val->cbegin()) {
+              sstream << ',';
+            }
+            if (indent != -1) {
+              sstream << make_indent(indent);
+            }
+            sstream << citer->serialize(indent);
+          }
+          if (indent != -1) {
+            --indent;
+            if (!storage.array_val->empty()) {
+              sstream << make_indent(indent);
+            }
+          }
+          sstream << ']';
           break;
         }
         case ValueType::null_type:
-          sstream << "null" << delim;
+          sstream << "null";
           break;
         case ValueType::number_type: {
           char buf[MAX_NUMBER_STRING_SIZE];
-          sstream << std::string(dtoa(buf, storage.num_val)) << delim;
+          sstream << std::string(dtoa(buf, storage.num_val));
           break;
         }
         case ValueType::boolean_type:
-          sstream << (storage.bool_val ? "true" : "false") << delim;
+          sstream << (storage.bool_val ? "true" : "false");
           break;
       }
 
