@@ -9,10 +9,12 @@
 #include <sstream>
 #include <fstream>
 
-#define IS_DIGIT(x) \
-  (static_cast<unsigned int>((x) - '0') < static_cast<unsigned int>(10))
-
 namespace tinyjson {
+  constexpr unsigned int indent_size = 2;
+  constexpr bool is_digit(char x) {
+    return static_cast<unsigned int>((x) - '0') < static_cast<unsigned int>(10);
+  }
+
   // https://stackoverflow.com/questions/2602013/read-whole-ascii-file-into-c-stdstring
   bool read_file(const std::string& path, std::string& json_str) {
     std::ifstream ifs(path);
@@ -83,6 +85,24 @@ namespace tinyjson {
     array_type,
     object_type
   };
+
+  enum class TokenType {
+    start_object = '{',
+    end_object = '}',
+    start_array = '[',
+    end_array = ']',
+    double_quote = '\"',
+    start_value = ':',
+    comma_separator = ','
+  };
+
+  inline bool operator==(const char a, const TokenType b) {
+    return static_cast<TokenType>(a) == b;
+  }
+
+  inline bool operator!=(const char a, const TokenType b) {
+    return static_cast<TokenType>(a) != b;
+  }
 
   // https://stackoverflow.com/questions/2302969/convert-a-float-to-a-string
   static double PRECISION = 0.00000000000001;
@@ -199,7 +219,7 @@ namespace tinyjson {
         // accept. Somethig like `.7e+2`, `-.5234`
         leading_decimal_dots = true;
       }
-    } else if (IS_DIGIT(*curr)) { /* Pass through. */
+    } else if (is_digit(*curr)) { /* Pass through. */
     } else if (*curr == '.') {
       // accept. Somethig like `.7e+2`, `-.5234`
       leading_decimal_dots = true;
@@ -210,7 +230,7 @@ namespace tinyjson {
     // Read the integer part.
     end_not_reached = (curr != s_end);
     if (!leading_decimal_dots) {
-      while (end_not_reached && IS_DIGIT(*curr)) {
+      while (end_not_reached && is_digit(*curr)) {
         mantissa *= 10;
         mantissa += static_cast<int>(*curr - 0x30);
         curr++;
@@ -230,7 +250,7 @@ namespace tinyjson {
       curr++;
       read = 1;
       end_not_reached = (curr != s_end);
-      while (end_not_reached && IS_DIGIT(*curr)) {
+      while (end_not_reached && is_digit(*curr)) {
         static const double pow_lut[] = {
                 1.0, 0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001, 0.0000001,
         };
@@ -258,7 +278,7 @@ namespace tinyjson {
       if (end_not_reached && (*curr == '+' || *curr == '-')) {
         exp_sign = *curr;
         curr++;
-      } else if (IS_DIGIT(*curr)) { /* Pass through. */
+      } else if (is_digit(*curr)) { /* Pass through. */
       } else {
         // Empty E is not allowed.
         goto fail;
@@ -266,7 +286,7 @@ namespace tinyjson {
 
       read = 0;
       end_not_reached = (curr != s_end);
-      while (end_not_reached && IS_DIGIT(*curr)) {
+      while (end_not_reached && is_digit(*curr)) {
         exponent *= 10;
         exponent += static_cast<int>(*curr - 0x30);
         curr++;
@@ -330,125 +350,90 @@ namespace tinyjson {
       }
     }
 
-    static std::string indentation(unsigned int indent) {
+    static std::string make_indent(int indent) {
       std::stringstream sstream;
-      for (int i = 0; i < indent; i++) {
-        sstream << "  ";
+      sstream << '\n';
+      for (int i = 0; i < indent * indent_size; i++) {
+        sstream << ' ';
       }
       return sstream.str();
     }
 
-    std::string write(bool pretty = false) {
-      if (pretty) {
-        return "{\n" + pretty_print() + "\n}";
-      } else {
-        return "{" + print() + "}";
-      }
+    static std::string serialize_str(const std::string& str) {
+      return "\"" + str + "\"";
     }
 
-    std::string print(bool has_next = true) const {
-      std::stringstream sstream;
-      std::string delim;
+    std::string print(bool prettify = false) const {
+      return serialize(prettify ? 0 : -1);
+    }
 
-      if (has_next) {
-        delim = ',';
-      }
+    std::string serialize(int indent) const {
+      std::stringstream sstream;
 
       switch (type) {
         case ValueType::string_type:
-          sstream << '\"' << *(storage.str_val) << '\"' << delim;
+          sstream << serialize_str(*(storage.str_val));
           break;
         case ValueType::object_type: {
-          for (auto iter = storage.object_val->cbegin(); iter != storage.object_val->cend(); iter++) {
-            sstream << "\"" << iter->first << "\":";
-            if (iter->second.type == ValueType::object_type) {
-              sstream << '{';
+          sstream << '{';
+          if (indent != -1) {
+            ++indent;
+          }
+          for (auto citer = storage.object_val->cbegin(); citer != storage.object_val->cend(); ++citer) {
+            if (citer != storage.object_val->cbegin()) {
+              sstream << ',';
             }
-            auto iterCopy = iter;
-            bool next = false;
-            if (++iterCopy != storage.object_val->cend()) {
-              next = true;
+            if (indent != -1) {
+              sstream << make_indent(indent);
             }
-            sstream << iter->second.print(next);
-            if (iter->second.type == ValueType::object_type) {
-              sstream << '}' << (next ? "," : "");
+            sstream << serialize_str(citer->first) << ':';
+            if (indent != -1) {
+              sstream << ' ';
+            }
+            sstream << citer->second.serialize(indent);
+          }
+          if (indent != -1) {
+            --indent;
+            if (!storage.object_val->empty()) {
+              sstream << make_indent(indent);
             }
           }
+          sstream << '}';
           break;
         }
-        case ValueType::array_type:
-          sstream << "array" << delim;
+        case ValueType::array_type: {
+          sstream << '[';
+          if (indent != -1) {
+            ++indent;
+          }
+          for (auto citer = storage.array_val->cbegin(); citer != storage.array_val->cend(); ++citer) {
+            if (citer != storage.array_val->cbegin()) {
+              sstream << ',';
+            }
+            if (indent != -1) {
+              sstream << make_indent(indent);
+            }
+            sstream << citer->serialize(indent);
+          }
+          if (indent != -1) {
+            --indent;
+            if (!storage.array_val->empty()) {
+              sstream << make_indent(indent);
+            }
+          }
+          sstream << ']';
           break;
+        }
         case ValueType::null_type:
-          sstream << "null" << delim;
+          sstream << "null";
           break;
         case ValueType::number_type: {
           char buf[MAX_NUMBER_STRING_SIZE];
-          sstream << std::string(dtoa(buf, storage.num_val)) << delim;
+          sstream << std::string(dtoa(buf, storage.num_val));
           break;
         }
         case ValueType::boolean_type:
-          sstream << (storage.bool_val ? "true" : "false") << delim;
-          break;
-      }
-
-      return sstream.str();
-    }
-
-    std::string pretty_print(unsigned int indent = 1, bool has_next = true) const {
-      std::stringstream sstream;
-      std::string delim;
-
-      if (has_next) {
-        delim = ',';
-      }
-
-      switch (type) {
-        case ValueType::string_type:
-          sstream << '\"' << *(storage.str_val) << '\"' << delim;
-          break;
-        case ValueType::object_type: {
-          std::string space = indentation(indent);
-          for (auto iter = storage.object_val->cbegin(); iter != storage.object_val->cend(); iter++) {
-            // prevent first newline
-            if (iter != storage.object_val->begin()) {
-              sstream << '\n';
-            }
-            sstream << space << "\"" << iter->first << "\": ";
-            if (iter->second.type == ValueType::object_type) {
-              sstream << '{';
-              if (!iter->second.storage.object_val->empty()) {
-                sstream << '\n';
-              }
-            }
-            auto iterCopy = iter;
-            bool next = false;
-            if (++iterCopy != storage.object_val->cend()) {
-              next = true;
-            }
-            sstream << iter->second.pretty_print(indent + 1, next);
-            if (iter->second.type == ValueType::object_type) {
-              if (!iter->second.storage.object_val->empty()) {
-                sstream << '\n' << space;
-              }
-              sstream << '}' << (next ? "," : "");
-            }
-          }
-          break;
-        }
-        case ValueType::array_type:
-          sstream << "array" << delim;
-          break;
-        case ValueType::null_type:
-          sstream << "null" << delim;
-          break;
-        case ValueType::number_type: {
-          char buf[MAX_NUMBER_STRING_SIZE];
-          sstream << std::string(dtoa(buf, storage.num_val)) << delim;
-          break;
-        }
-        case ValueType::boolean_type:
-          sstream << (storage.bool_val ? "true" : "false") << delim;
+          sstream << (storage.bool_val ? "true" : "false");
           break;
       }
 
@@ -471,8 +456,9 @@ namespace tinyjson {
 
   bool parseNumber(const char** token, double* number);
   std::string parseString(const char** token);
-  bool parseValue(const char** token, Value& val, const std::string& key);
-  bool parseObject(Value& value, const char** token, const std::string& key);
+  bool parseValue(Value& value, const char** token);
+  bool parseObject(Value& value, const char** token);
+  bool parseArray(Value& value, const char** token);
 
   bool parseNumber(const char** token, double* number) {
     (*token) += strspn((*token), " \t");
@@ -481,7 +467,7 @@ namespace tinyjson {
       double value;
       if (!atod((*token), end, &value)) return false;
       (*number) = value;
-      if (end[0] == ',') {
+      if (end[0] == TokenType::comma_separator) {
         end++;
       }
       (*token) = end;
@@ -507,26 +493,19 @@ namespace tinyjson {
     return key;
   }
 
-  bool parseValue(const char** token, Value& val, const std::string& key) {
-    if ((*token)[0] == '\"') {
+  bool parseValue(Value& value, const char** token) {
+    if ((*token)[0] == TokenType::double_quote) {
       // string
       (*token)++;
-      // empty string is not allowed
-      if ((*token)[0] == '\"') return false;
       std::string str_value = parseString(token);
-      // no key found
-      if (str_value.empty()) return false;
-      val.set_value(str_value);
-    } else if ((*token)[0] == '[') {
-      // array
-      (*token)++;
+      value.set_value(str_value);
     } else if (0 == strncmp((*token), "true", 4)) {
       // boolean true
-      val.set_value(true);
+      value.set_value(true);
       (*token) += 4;
     } else if (0 == strncmp((*token), "false", 5)) {
       // boolean false
-      val.set_value(false);
+      value.set_value(false);
       (*token) += 5;
     } else if (0 == strncmp((*token), "null", 4)) {
       // null
@@ -535,17 +514,17 @@ namespace tinyjson {
       // number
       double number = 0.0;
       if (!parseNumber(token, &number)) return false;
-      val.set_value(number);
+      value.set_value(number);
     }
 
-    if ((*token)[0] == ',') {
+    if ((*token)[0] == TokenType::comma_separator) {
       (*token)++;
     }
 
     return true;
   }
 
-  bool parseObject(Value& val, const char** token, const std::string& key) {
+  bool parseObject(Value& value, const char** token) {
     std::string current_key;
     object root;
 
@@ -555,52 +534,97 @@ namespace tinyjson {
       if ((*token) == nullptr) return false;
 
       // end of object
-      if ((*token)[0] == '}') {
+      if ((*token)[0] == TokenType::end_object) {
         (*token)++;
         break;
       }
 
       // start of key
-      if ((*token)[0] == '\"') {
+      if ((*token)[0] == TokenType::double_quote) {
         (*token)++;
-        // empty string is not allowed
-        if ((*token)[0] == '\"') return false;
+        // empty key is not allowed
+        if ((*token)[0] == TokenType::double_quote) return false;
         current_key = parseString(token);
         // no key found
         if (current_key.empty()) return false;
-        if ((*token)[0] == ',') token++;
+        if ((*token)[0] == TokenType::comma_separator) token++;
         continue;
       }
 
-      // start of value
-      if ((*token)[0] == ':') {
+      if ((*token)[0] == TokenType::start_value) {
         (*token)++;
         (*token) += strspn((*token), " \t\n\r");
+
         Value current_value;
-        // another object
-        if ((*token)[0] == '{') {
+        if ((*token)[0] == TokenType::start_object) {
           (*token)++;
-          if (parseObject(current_value, token, current_key)) {
-            root.insert(std::make_pair(current_key, current_value));
-          } else {
-            return false;
-          }
+          if (!parseObject(current_value, token)) return false;
+        } else if ((*token)[0] == TokenType::start_array) {
+          (*token)++;
+          if (!parseArray(current_value, token)) return false;
         } else {
-          if (parseValue(token, current_value, key)) {
-            root.insert(std::make_pair(current_key, current_value));
-          } else {
-            return false;
-          }
+          if (!parseValue(current_value, token)) return false;
         }
+        root.insert(std::make_pair(current_key, current_value));
+
         continue;
       }
     }
 
-    if ((*token)[0] == ',') {
+    if ((*token)[0] == TokenType::comma_separator) {
       (*token)++;
     }
 
-    val.set_value(root);
+    value.set_value(root);
+    return true;
+  }
+
+  bool parseArray(Value& value, const char** token) {
+    array root;
+
+    while ((*token)[0]) {
+      (*token) += strspn((*token), " \t\n\r");
+
+      if ((*token) == nullptr) return false;
+
+      // end of array
+      if ((*token)[0] == TokenType::end_array) {
+        (*token)++;
+        break;
+      }
+
+      if ((*token)[0] == TokenType::comma_separator) {
+        (*token)++;
+      }
+
+      if ((*token)[0] == TokenType::start_object) {
+        (*token)++;
+        (*token) += strspn((*token), " \t\n\r");
+        Value current_obj;
+        if (!parseObject(current_obj, token)) return false;
+        root.emplace_back(current_obj);
+        continue;
+      } else if ((*token)[0] == TokenType::start_array) {
+        (*token)++;
+        (*token) += strspn((*token), " \t\n\r");
+        Value current_arr;
+        if (!parseArray(current_arr, token)) return false;
+        root.emplace_back(current_arr);
+        continue;
+      } else {
+        (*token) += strspn((*token), " \t\n\r");
+        Value current_value;
+        if (!parseValue(current_value, token)) return false;
+        root.emplace_back(current_value);
+        continue;
+      }
+    }
+
+    if ((*token)[0] == TokenType::comma_separator) {
+      (*token)++;
+    }
+
+    value.set_value(root);
     return true;
   }
 
@@ -616,64 +640,52 @@ namespace tinyjson {
       if (token == nullptr) return false;
 
       // start of object
-      if (token[0] == '{') {
+      if (token[0] == TokenType::start_object) {
         start_of_object = true;
         token++;
         token += strspn(token, " \t\n\r");
-        // empty {} json
-        if (token[0] == '}') return true;
+        // empty {} object
+        if (token[0] == TokenType::end_object) return true;
         continue;
       }
 
       // end of json
-      if (token[0] == '}') {
-        if (start_of_object) {
-          start_of_object = !start_of_object;
-          token++;
-        } else {
-          return false;
-        }
+      if (token[0] == TokenType::end_object) {
+        if (!start_of_object) return false;
+        start_of_object = !start_of_object;
+        token++;
         continue;
       }
 
       // start of key
-      if (token[0] == '\"') {
+      if (token[0] == TokenType::double_quote) {
         token++;
         // empty string is not allowed
-        if (token[0] == '\"') return false;
+        if (token[0] == TokenType::double_quote) return false;
         current_key = parseString(&token);
         // no key found
         if (current_key.empty()) return false;
-        if (token[0] == ',') token++;
+        if (token[0] == TokenType::comma_separator) token++;
         continue;
       }
 
       // start of value
-      if (token[0] == ':' && start_of_object) {
+      if (token[0] == TokenType::start_value && start_of_object) {
         token++;
         token += strspn(token, " \t\n\r");
+
         Value current_value;
-
-        // check is object
-        if (token[0] == '{') {
+        if (token[0] == TokenType::start_object) {
           token++;
-          Value obj_val;
-          if (!parseObject(obj_val, &token, current_key))
-            return false;
-          root.insert(std::make_pair(current_key, obj_val));
+          if (!parseObject(current_value, &token)) return false;
+        } else if (token[0] == TokenType::start_array) {
+          token++;
+          if (!parseArray(current_value, &token)) return false;
         } else {
-          if (!parseValue(&token, current_value, current_key))
-            return false;
-          root.insert(std::make_pair(current_key, current_value));
+          if (!parseValue(current_value, &token)) return false;
         }
+        root.insert(std::make_pair(current_key, current_value));
 
-        continue;
-      }
-
-      // array
-      if (token[0] == '[') {
-        token++;
-        token += strspn(token, " \t");
         continue;
       }
     }
