@@ -10,9 +10,14 @@
 #include <fstream>
 
 namespace tinyjson {
-  constexpr unsigned int indent_size = 2;
-  constexpr bool is_digit(char x) {
+  const double dbl_epsilon = std::numeric_limits<double>::epsilon();
+  const unsigned int indent_size = 2;
+  constexpr bool is_digit(const char x) {
     return static_cast<unsigned int>((x) - '0') < static_cast<unsigned int>(10);
+  }
+
+  inline bool is_equal(const double a, const double b) {
+    return std::fabs(a - b) < dbl_epsilon;
   }
 
   // https://stackoverflow.com/questions/2602013/read-whole-ascii-file-into-c-stdstring
@@ -323,7 +328,6 @@ namespace tinyjson {
 
   public:
     inline Value() : storage(), type(ValueType::null_type) {}
-//    inline Value(const Value& other) : storage(), type(ValueType::null_type) { *this = other; }
     inline ~Value() {
       switch (type) {
         case ValueType::string_type:
@@ -366,26 +370,38 @@ namespace tinyjson {
     inline std::string print(bool prettify = false) const { return serialize(prettify ? 0 : -1); }
 
   public:
-//    inline Value& operator=(const Value& other) {
-//      if (this != &other) {
-//        // copy here
-//        // TODO
-//      }
-//
-//      return *this;
-//    }
+    inline Value& operator=(const Value& other) {
+      if (this != &other) {
+        type = other.type;
+        storage = other.storage;
+      }
 
-//    inline bool operator==(const Value& other) const {
-//      if (type != other.type) {
-//        return false;
-//      }
-//      // TODO
-//      return true;
-//    }
-//
-//    inline bool operator!=(const Value& other) const {
-//      return !(*this == other);
-//    }
+      return *this;
+    }
+
+    inline bool operator==(const Value& other) const {
+      if (type != other.type) {
+        return false;
+      }
+
+      switch (type) {
+        case ValueType::string_type:
+          return *(storage.str_val) == *(other.storage.str_val);
+        case ValueType::number_type:
+          return is_equal(storage.num_val, other.storage.num_val);
+        case ValueType::boolean_type:
+          return storage.bool_val == other.storage.bool_val;
+        case ValueType::object_type:
+        case ValueType::array_type:
+          return *this == other;
+        default:
+          return true;
+      }
+    }
+
+    inline bool operator!=(const Value& other) const {
+      return !(*this == other);
+    }
 
   private:
     static std::string make_indent(int indent) {
