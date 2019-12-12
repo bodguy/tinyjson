@@ -20,21 +20,6 @@ namespace tinyjson {
     return std::fabs(a - b) < dbl_epsilon;
   }
 
-  // https://stackoverflow.com/questions/2602013/read-whole-ascii-file-into-c-stdstring
-  bool read_file(const std::string& path, std::string& json_str) {
-    std::ifstream ifs(path);
-    if(!ifs) {
-      return false;
-    }
-
-    ifs.seekg(0, std::ios::end);
-    json_str.reserve(ifs.tellg());
-    ifs.seekg(0, std::ios::beg);
-
-    json_str.assign((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    return true;
-  }
-
   template <typename K, typename V>
   class linked_hash_map {
   public:
@@ -311,10 +296,10 @@ namespace tinyjson {
     return false;
   }
 
-  class Value {
+  class JsonValue {
   public:
-    typedef std::vector<Value> array;
-    typedef linked_hash_map<std::string, Value> object;
+    typedef std::vector<JsonValue> array;
+    typedef linked_hash_map<std::string, JsonValue> object;
     typedef bool boolean;
     typedef double number;
     typedef std::string string;
@@ -326,9 +311,8 @@ namespace tinyjson {
       object* object_val;
     };
 
-  public:
-    inline Value() : storage(), type(ValueType::null_type) {}
-    inline ~Value() {
+    inline JsonValue() : storage(), type(ValueType::null_type) {}
+    inline ~JsonValue() {
       switch (type) {
         case ValueType::string_type:
 //          delete storage.str_val;
@@ -369,8 +353,7 @@ namespace tinyjson {
     }
     inline std::string print(bool prettify = false) const { return serialize(prettify ? 0 : -1); }
 
-  public:
-    inline Value& operator=(const Value& other) {
+    inline JsonValue& operator=(const JsonValue& other) {
       if (this != &other) {
         type = other.type;
         storage = other.storage;
@@ -379,7 +362,7 @@ namespace tinyjson {
       return *this;
     }
 
-    inline bool operator==(const Value& other) const {
+    inline bool operator==(const JsonValue& other) const {
       if (type != other.type) {
         return false;
       }
@@ -399,7 +382,7 @@ namespace tinyjson {
       }
     }
 
-    inline bool operator!=(const Value& other) const {
+    inline bool operator!=(const JsonValue& other) const {
       return !(*this == other);
     }
 
@@ -490,22 +473,21 @@ namespace tinyjson {
       return sstream.str();
     }
 
-  private:
     Storage storage;
     ValueType type;
   };
 
-  typedef Value::array array;
-  typedef Value::object object;
-  typedef Value::boolean boolean;
-  typedef Value::number number;
-  typedef Value::string string;
+  typedef JsonValue::array array;
+  typedef JsonValue::object object;
+  typedef JsonValue::boolean boolean;
+  typedef JsonValue::number number;
+  typedef JsonValue::string string;
 
   bool parse_number(const char** token, double* number);
   std::string parse_string(const char** token);
-  bool parse_value(Value& value, const char** token);
-  bool parse_object(Value& value, const char** token);
-  bool parse_array(Value& value, const char** token);
+  bool parse_value(JsonValue& value, const char** token);
+  bool parse_object(JsonValue& value, const char** token);
+  bool parse_array(JsonValue& value, const char** token);
 
   bool parse_number(const char** token, double* number) {
     (*token) += strspn((*token), " \t");
@@ -540,7 +522,7 @@ namespace tinyjson {
     return key;
   }
 
-  bool parse_value(Value& value, const char** token) {
+  bool parse_value(JsonValue& value, const char** token) {
     if ((*token)[0] == TokenType::double_quote) {
       // string
       (*token)++;
@@ -571,7 +553,7 @@ namespace tinyjson {
     return true;
   }
 
-  bool parse_object(Value& value, const char** token) {
+  bool parse_object(JsonValue& value, const char** token) {
     std::string current_key;
     object root;
 
@@ -602,7 +584,7 @@ namespace tinyjson {
         (*token)++;
         (*token) += strspn((*token), " \t\n\r");
 
-        Value current_value;
+        JsonValue current_value;
         if ((*token)[0] == TokenType::start_object) {
           (*token)++;
           if (!parse_object(current_value, token)) return false;
@@ -626,7 +608,7 @@ namespace tinyjson {
     return true;
   }
 
-  bool parse_array(Value& value, const char** token) {
+  bool parse_array(JsonValue& value, const char** token) {
     array root;
 
     while ((*token)[0]) {
@@ -647,20 +629,20 @@ namespace tinyjson {
       if ((*token)[0] == TokenType::start_object) {
         (*token)++;
         (*token) += strspn((*token), " \t\n\r");
-        Value current_obj;
+        JsonValue current_obj;
         if (!parse_object(current_obj, token)) return false;
         root.emplace_back(current_obj);
         continue;
       } else if ((*token)[0] == TokenType::start_array) {
         (*token)++;
         (*token) += strspn((*token), " \t\n\r");
-        Value current_arr;
+        JsonValue current_arr;
         if (!parse_array(current_arr, token)) return false;
         root.emplace_back(current_arr);
         continue;
       } else {
         (*token) += strspn((*token), " \t\n\r");
-        Value current_value;
+        JsonValue current_value;
         if (!parse_value(current_value, token)) return false;
         root.emplace_back(current_value);
         continue;
@@ -675,7 +657,7 @@ namespace tinyjson {
     return true;
   }
 
-  bool parse(Value& value, const std::string& json) {
+  bool parse(JsonValue& value, const std::string& json) {
     const char* token = json.c_str();
     bool start_of_object = false;
     std::string current_key;
@@ -721,7 +703,7 @@ namespace tinyjson {
         token++;
         token += strspn(token, " \t\n\r");
 
-        Value current_value;
+        JsonValue current_value;
         if (token[0] == TokenType::start_object) {
           token++;
           if (!parse_object(current_value, &token)) return false;
@@ -739,15 +721,5 @@ namespace tinyjson {
 
     value.set_value(root);
     return true;
-  }
-
-  bool parse_from_file(Value& value, const std::string& path) {
-    std::string json_str;
-    bool res = read_file(path, json_str);
-    if (res) {
-      return parse(value, json_str);
-    }
-
-    return false;
   }
 }
