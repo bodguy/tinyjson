@@ -6,7 +6,6 @@ Blazing fast header only json parser
 
 - utf8 support
 - user interface (value iterator)
-- various source (file, http, string)
 
 ### DONE
 

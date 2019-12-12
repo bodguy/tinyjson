@@ -312,6 +312,12 @@ namespace tinyjson {
     };
 
     inline JsonValue() : storage(), type(ValueType::null_type) {}
+    explicit JsonValue(boolean val) : storage(), type(ValueType::boolean_type) { storage.bool_val = val; }
+    explicit JsonValue(number val) : storage(), type(ValueType::number_type) { storage.num_val = val; }
+    explicit JsonValue(const string& val) : storage(), type(ValueType::string_type) { storage.str_val = new std::string(val); }
+    explicit JsonValue(const char* val) : storage(), type(ValueType::string_type) { storage.str_val = new std::string(val); }
+    explicit JsonValue(const array& val) : storage(), type(ValueType::array_type) { storage.array_val = new array(val); }
+    explicit JsonValue(const object& val) : storage(), type(ValueType::object_type) { storage.object_val = new object(val); }
     inline ~JsonValue() {
       switch (type) {
         case ValueType::string_type:

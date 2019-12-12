@@ -19,27 +19,23 @@ int main() {
 
   float elapsed = watch.milli();
   if (!res) {
-    std::cout << "parse failed" << '\n';
-  } else {
-    JsonValue newValue;
-    object obj;
-    JsonValue strVal;
-    strVal.set_value("value");
-    obj.insert(std::make_pair("key1", strVal));
-    object obj2;
-    JsonValue strVal2;
-    strVal2.set_value("min123");
-    obj2.insert(std::make_pair("name", strVal2));
-    JsonValue newValue2;
-    newValue2.set_value(obj2);
-    obj.insert(std::make_pair("empty", newValue2));
-    newValue.set_value(obj);
-
-    std::cout << "time elapsed: " << elapsed << " ms" << std::endl;
-    std::cout << value.print(true) << std::endl;
-    std::cout << newValue.print(true) << std::endl;
-    std::cout << std::boolalpha << (value == newValue) << std::endl;
+    std::cout << "json parse failed" << std::endl;
+    return -1;
   }
+
+  object obj;
+  obj.insert(std::make_pair("key1", JsonValue("value")));
+  object obj2;
+  obj2.insert(std::make_pair("name", JsonValue("min123")));
+  obj.insert(std::make_pair("empty", JsonValue(obj2)));
+  JsonValue arrValue({JsonValue(1.0), JsonValue(2.0), JsonValue(3.0)});
+  obj.insert(std::make_pair("arr", arrValue));
+  JsonValue newValue(obj);
+
+  std::cout << "time elapsed: " << elapsed << " ms" << std::endl;
+  std::cout << value.print(true) << std::endl;
+  std::cout << newValue.print(true) << std::endl;
+  std::cout << std::boolalpha << (value == newValue) << std::endl;
 
   return 0;
 }
