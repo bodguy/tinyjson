@@ -306,34 +306,48 @@ namespace tinyjson {
     return false;
   }
 
-  struct Value {
+  class Value {
+  public:
     typedef std::vector<Value> array;
     typedef linked_hash_map<std::string, Value> object;
-    Value() : storage(), type(ValueType::null_type) {}
-    ~Value() {
-//      switch (type) {
-//        case ValueType::string_type:
+    typedef bool boolean;
+    typedef double number;
+    typedef std::string string;
+    union Storage {
+      boolean bool_val;
+      number num_val;
+      string* str_val;
+      array* array_val;
+      object* object_val;
+    };
+
+  public:
+    inline Value() : storage(), type(ValueType::null_type) {}
+//    inline Value(const Value& other) : storage(), type(ValueType::null_type) { *this = other; }
+    inline ~Value() {
+      switch (type) {
+        case ValueType::string_type:
 //          delete storage.str_val;
-//          storage.str_val = nullptr;
-//          break;
-//        case ValueType::array_type:
+//          printf("String destruct\n");
+          break;
+        case ValueType::array_type:
 //          delete storage.array_val;
-//          storage.array_val = nullptr;
-//          break;
-//        case ValueType::object_type:
+//          printf("Array destruct\n");
+          break;
+        case ValueType::object_type:
 //          delete storage.object_val;
-//          storage.object_val = nullptr;
-//          break;
-//        default:
-//          break;
-//      }
+//          printf("Object destruct\n");
+          break;
+        default:
+          break;
+      }
     }
-    void set_value(bool val) { type = ValueType::boolean_type; storage.bool_val = val; }
-    void set_value(double val) { type = ValueType::number_type; storage.num_val = val; }
-    void set_value(const std::string& val) { type = ValueType::string_type; storage.str_val = new std::string(val); }
-    void set_value(const array& val) { type = ValueType::array_type; storage.array_val = new array(val); }
-    void set_value(const object& val) { type = ValueType::object_type; storage.object_val = new object(val); }
-    std::string to_type() const {
+    inline void set_value(boolean val) { type = ValueType::boolean_type; storage.bool_val = val; }
+    inline void set_value(number val) { type = ValueType::number_type; storage.num_val = val; }
+    inline void set_value(const string& val) { type = ValueType::string_type; storage.str_val = new std::string(val); }
+    inline void set_value(const array& val) { type = ValueType::array_type; storage.array_val = new array(val); }
+    inline void set_value(const object& val) { type = ValueType::object_type; storage.object_val = new object(val); }
+    inline std::string to_string() const {
       switch (type) {
         case ValueType::string_type:
           return "string";
@@ -349,7 +363,31 @@ namespace tinyjson {
           return "boolean";
       }
     }
+    inline std::string print(bool prettify = false) const { return serialize(prettify ? 0 : -1); }
 
+  public:
+//    inline Value& operator=(const Value& other) {
+//      if (this != &other) {
+//        // copy here
+//        // TODO
+//      }
+//
+//      return *this;
+//    }
+
+//    inline bool operator==(const Value& other) const {
+//      if (type != other.type) {
+//        return false;
+//      }
+//      // TODO
+//      return true;
+//    }
+//
+//    inline bool operator!=(const Value& other) const {
+//      return !(*this == other);
+//    }
+
+  private:
     static std::string make_indent(int indent) {
       std::stringstream sstream;
       sstream << '\n';
@@ -363,11 +401,7 @@ namespace tinyjson {
       return "\"" + str + "\"";
     }
 
-    std::string print(bool prettify = false) const {
-      return serialize(prettify ? 0 : -1);
-    }
-
-    std::string serialize(int indent) const {
+    inline std::string serialize(int indent) const {
       std::stringstream sstream;
 
       switch (type) {
@@ -440,27 +474,24 @@ namespace tinyjson {
       return sstream.str();
     }
 
-    union Storage {
-      bool bool_val;
-      double num_val;
-      std::string* str_val;
-      array* array_val;
-      object* object_val;
-    };
+  private:
     Storage storage;
     ValueType type;
   };
 
   typedef Value::array array;
   typedef Value::object object;
+  typedef Value::boolean boolean;
+  typedef Value::number number;
+  typedef Value::string string;
 
-  bool parseNumber(const char** token, double* number);
-  std::string parseString(const char** token);
-  bool parseValue(Value& value, const char** token);
-  bool parseObject(Value& value, const char** token);
-  bool parseArray(Value& value, const char** token);
+  bool parse_number(const char** token, double* number);
+  std::string parse_string(const char** token);
+  bool parse_value(Value& value, const char** token);
+  bool parse_object(Value& value, const char** token);
+  bool parse_array(Value& value, const char** token);
 
-  bool parseNumber(const char** token, double* number) {
+  bool parse_number(const char** token, double* number) {
     (*token) += strspn((*token), " \t");
     const char* end = (*token) + strcspn((*token), " \t,\n\r}");
     if (end != (*token)) {
@@ -477,7 +508,7 @@ namespace tinyjson {
     return false;
   }
 
-  std::string parseString(const char** token) {
+  std::string parse_string(const char** token) {
     const char* end = (*token) + strcspn((*token), "\"");
     size_t offset = end - (*token);
     std::string key;
@@ -493,11 +524,11 @@ namespace tinyjson {
     return key;
   }
 
-  bool parseValue(Value& value, const char** token) {
+  bool parse_value(Value& value, const char** token) {
     if ((*token)[0] == TokenType::double_quote) {
       // string
       (*token)++;
-      std::string str_value = parseString(token);
+      std::string str_value = parse_string(token);
       value.set_value(str_value);
     } else if (0 == strncmp((*token), "true", 4)) {
       // boolean true
@@ -513,7 +544,7 @@ namespace tinyjson {
     } else {
       // number
       double number = 0.0;
-      if (!parseNumber(token, &number)) return false;
+      if (!parse_number(token, &number)) return false;
       value.set_value(number);
     }
 
@@ -524,7 +555,7 @@ namespace tinyjson {
     return true;
   }
 
-  bool parseObject(Value& value, const char** token) {
+  bool parse_object(Value& value, const char** token) {
     std::string current_key;
     object root;
 
@@ -544,7 +575,7 @@ namespace tinyjson {
         (*token)++;
         // empty key is not allowed
         if ((*token)[0] == TokenType::double_quote) return false;
-        current_key = parseString(token);
+        current_key = parse_string(token);
         // no key found
         if (current_key.empty()) return false;
         if ((*token)[0] == TokenType::comma_separator) token++;
@@ -558,12 +589,12 @@ namespace tinyjson {
         Value current_value;
         if ((*token)[0] == TokenType::start_object) {
           (*token)++;
-          if (!parseObject(current_value, token)) return false;
+          if (!parse_object(current_value, token)) return false;
         } else if ((*token)[0] == TokenType::start_array) {
           (*token)++;
-          if (!parseArray(current_value, token)) return false;
+          if (!parse_array(current_value, token)) return false;
         } else {
-          if (!parseValue(current_value, token)) return false;
+          if (!parse_value(current_value, token)) return false;
         }
         root.insert(std::make_pair(current_key, current_value));
 
@@ -579,7 +610,7 @@ namespace tinyjson {
     return true;
   }
 
-  bool parseArray(Value& value, const char** token) {
+  bool parse_array(Value& value, const char** token) {
     array root;
 
     while ((*token)[0]) {
@@ -601,20 +632,20 @@ namespace tinyjson {
         (*token)++;
         (*token) += strspn((*token), " \t\n\r");
         Value current_obj;
-        if (!parseObject(current_obj, token)) return false;
+        if (!parse_object(current_obj, token)) return false;
         root.emplace_back(current_obj);
         continue;
       } else if ((*token)[0] == TokenType::start_array) {
         (*token)++;
         (*token) += strspn((*token), " \t\n\r");
         Value current_arr;
-        if (!parseArray(current_arr, token)) return false;
+        if (!parse_array(current_arr, token)) return false;
         root.emplace_back(current_arr);
         continue;
       } else {
         (*token) += strspn((*token), " \t\n\r");
         Value current_value;
-        if (!parseValue(current_value, token)) return false;
+        if (!parse_value(current_value, token)) return false;
         root.emplace_back(current_value);
         continue;
       }
@@ -628,7 +659,7 @@ namespace tinyjson {
     return true;
   }
 
-  bool parseJson(Value& value, const std::string& json) {
+  bool parse(Value& value, const std::string& json) {
     const char* token = json.c_str();
     bool start_of_object = false;
     std::string current_key;
@@ -662,7 +693,7 @@ namespace tinyjson {
         token++;
         // empty string is not allowed
         if (token[0] == TokenType::double_quote) return false;
-        current_key = parseString(&token);
+        current_key = parse_string(&token);
         // no key found
         if (current_key.empty()) return false;
         if (token[0] == TokenType::comma_separator) token++;
@@ -677,12 +708,12 @@ namespace tinyjson {
         Value current_value;
         if (token[0] == TokenType::start_object) {
           token++;
-          if (!parseObject(current_value, &token)) return false;
+          if (!parse_object(current_value, &token)) return false;
         } else if (token[0] == TokenType::start_array) {
           token++;
-          if (!parseArray(current_value, &token)) return false;
+          if (!parse_array(current_value, &token)) return false;
         } else {
-          if (!parseValue(current_value, &token)) return false;
+          if (!parse_value(current_value, &token)) return false;
         }
         root.insert(std::make_pair(current_key, current_value));
 
@@ -694,11 +725,11 @@ namespace tinyjson {
     return true;
   }
 
-  bool parseJsonFromFile(Value& value, const std::string& path) {
+  bool parse_from_file(Value& value, const std::string& path) {
     std::string json_str;
     bool res = read_file(path, json_str);
     if (res) {
-      return parseJson(value, json_str);
+      return parse(value, json_str);
     }
 
     return false;
