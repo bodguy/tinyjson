@@ -14,15 +14,18 @@ int main() {
 
   StopWatch watch;
   watch.start();
-  res = parse(value, json);
+  res = deserialize(value, json);
   watch.stop();
 
-  float elapsed = watch.milli();
   if (!res) {
     std::cout << "json parse failed" << std::endl;
     return -1;
   }
 
+  std::cout << "time elapsed: " << watch.milli() << " ms" << std::endl;
+  std::cout << value.serialize(true) << std::endl;
+
+  // make a new json
   object obj;
   obj.insert(std::make_pair("key1", JsonValue("value")));
   object obj2;
@@ -32,9 +35,7 @@ int main() {
   obj.insert(std::make_pair("arr", arrValue));
   JsonValue newValue(obj);
 
-  std::cout << "time elapsed: " << elapsed << " ms" << std::endl;
-  std::cout << value.print(true) << std::endl;
-  std::cout << newValue.print(true) << std::endl;
+  std::cout << newValue.serialize(true) << std::endl;
   std::cout << std::boolalpha << (value == newValue) << std::endl;
 
   return 0;

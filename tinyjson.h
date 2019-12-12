@@ -34,12 +34,12 @@ namespace tinyjson {
       hash_map.clear();
     }
 
-    auto insert(const value_type& value) {
+    inline auto insert(const value_type& value) {
       linked_list.push_back(value);
       return hash_map.insert(std::make_pair(value.first, std::prev(linked_list.end())));
     }
 
-    bool erase(const K& key) {
+    inline bool erase(const K& key) {
       typename std::unordered_map<K, iterator>::iterator iter = hash_map.find(key);
       if (iter == hash_map.end()) {
         return false;
@@ -49,18 +49,27 @@ namespace tinyjson {
       return true;
     }
 
-    size_type size() const {
+    inline size_type size() const {
       return linked_list.size();
     }
 
-    bool empty() const {
+    inline bool empty() const {
       return linked_list.empty();
     }
 
-    iterator begin() { return linked_list.begin(); }
-    iterator end() { return linked_list.end(); }
-    const_iterator cbegin() const { return linked_list.cbegin(); }
-    const_iterator cend() const { return linked_list.cend(); }
+    inline const_iterator find(K key) const {
+      typename std::unordered_map<K, iterator>::const_iterator citer = hash_map.find(key);
+      if (citer == hash_map.cend()) {
+        return end();
+      }
+
+      return citer->second;
+    }
+
+    inline iterator begin() { return linked_list.begin(); }
+    inline iterator end() { return linked_list.end(); }
+    inline const_iterator cbegin() const { return linked_list.cbegin(); }
+    inline const_iterator cend() const { return linked_list.cend(); }
 
   private:
     std::list<value_type> linked_list;
@@ -82,8 +91,8 @@ namespace tinyjson {
     start_array = '[',
     end_array = ']',
     double_quote = '\"',
-    start_value = ':',
-    comma_separator = ','
+    colon = ':',
+    comma = ','
   };
 
   inline bool operator==(const char a, const TokenType b) {
@@ -298,11 +307,11 @@ namespace tinyjson {
 
   class JsonValue {
   public:
-    typedef std::vector<JsonValue> array;
-    typedef linked_hash_map<std::string, JsonValue> object;
     typedef bool boolean;
     typedef double number;
     typedef std::string string;
+    typedef std::vector<JsonValue> array;
+    typedef linked_hash_map<std::string, JsonValue> object;
     union Storage {
       boolean bool_val;
       number num_val;
@@ -358,7 +367,7 @@ namespace tinyjson {
           return "boolean";
       }
     }
-    inline std::string print(bool prettify = false) const { return serialize(prettify ? 0 : -1); }
+    inline std::string serialize(bool prettify = false) const { return _serialize(prettify ? 0 : -1); }
 
     inline JsonValue& operator=(const JsonValue& other) {
       if (this != &other) {
@@ -408,6 +417,16 @@ namespace tinyjson {
       return !(*this == other);
     }
 
+    template <typename T> inline bool is_type() const { return false; }
+    template <> inline bool is_type<boolean>() const { return type == ValueType::boolean_type; }
+    template <> inline bool is_type<number>() const { return type == ValueType::number_type; }
+    template <> inline bool is_type<string>() const { return type == ValueType::string_type; }
+    template <> inline bool is_type<array>() const { return type == ValueType::array_type; }
+    template <> inline bool is_type<object>() const { return type == ValueType::object_type; }
+    inline JsonValue& get_value(const string& key) const {
+
+    }
+
   private:
     static std::string make_indent(int indent) {
       std::stringstream sstream;
@@ -422,7 +441,7 @@ namespace tinyjson {
       return "\"" + str + "\"";
     }
 
-    inline std::string serialize(int indent) const {
+    inline std::string _serialize(int indent) const {
       std::stringstream sstream;
 
       switch (type) {
@@ -445,7 +464,7 @@ namespace tinyjson {
             if (indent != -1) {
               sstream << ' ';
             }
-            sstream << citer->second.serialize(indent);
+            sstream << citer->second._serialize(indent);
           }
           if (indent != -1) {
             --indent;
@@ -468,7 +487,7 @@ namespace tinyjson {
             if (indent != -1) {
               sstream << make_indent(indent);
             }
-            sstream << citer->serialize(indent);
+            sstream << citer->_serialize(indent);
           }
           if (indent != -1) {
             --indent;
@@ -499,11 +518,11 @@ namespace tinyjson {
     ValueType type;
   };
 
-  typedef JsonValue::array array;
-  typedef JsonValue::object object;
   typedef JsonValue::boolean boolean;
   typedef JsonValue::number number;
   typedef JsonValue::string string;
+  typedef JsonValue::array array;
+  typedef JsonValue::object object;
 
   bool parse_number(const char** token, double* number);
   std::string parse_string(const char** token);
@@ -518,7 +537,7 @@ namespace tinyjson {
       double value;
       if (!atod((*token), end, &value)) return false;
       (*number) = value;
-      if (end[0] == TokenType::comma_separator) {
+      if (end[0] == TokenType::comma) {
         end++;
       }
       (*token) = end;
@@ -568,7 +587,7 @@ namespace tinyjson {
       value.set_value(number);
     }
 
-    if ((*token)[0] == TokenType::comma_separator) {
+    if ((*token)[0] == TokenType::comma) {
       (*token)++;
     }
 
@@ -598,11 +617,11 @@ namespace tinyjson {
         current_key = parse_string(token);
         // no key found
         if (current_key.empty()) return false;
-        if ((*token)[0] == TokenType::comma_separator) token++;
+        if ((*token)[0] == TokenType::comma) token++;
         continue;
       }
 
-      if ((*token)[0] == TokenType::start_value) {
+      if ((*token)[0] == TokenType::colon) {
         (*token)++;
         (*token) += strspn((*token), " \t\n\r");
 
@@ -622,7 +641,7 @@ namespace tinyjson {
       }
     }
 
-    if ((*token)[0] == TokenType::comma_separator) {
+    if ((*token)[0] == TokenType::comma) {
       (*token)++;
     }
 
@@ -644,7 +663,7 @@ namespace tinyjson {
         break;
       }
 
-      if ((*token)[0] == TokenType::comma_separator) {
+      if ((*token)[0] == TokenType::comma) {
         (*token)++;
       }
 
@@ -671,7 +690,7 @@ namespace tinyjson {
       }
     }
 
-    if ((*token)[0] == TokenType::comma_separator) {
+    if ((*token)[0] == TokenType::comma) {
       (*token)++;
     }
 
@@ -679,7 +698,7 @@ namespace tinyjson {
     return true;
   }
 
-  bool parse(JsonValue& value, const std::string& json) {
+  bool deserialize(JsonValue& value, const std::string& json) {
     const char* token = json.c_str();
     bool start_of_object = false;
     std::string current_key;
@@ -716,12 +735,12 @@ namespace tinyjson {
         current_key = parse_string(&token);
         // no key found
         if (current_key.empty()) return false;
-        if (token[0] == TokenType::comma_separator) token++;
+        if (token[0] == TokenType::comma) token++;
         continue;
       }
 
       // start of value
-      if (token[0] == TokenType::start_value && start_of_object) {
+      if (token[0] == TokenType::colon && start_of_object) {
         token++;
         token += strspn(token, " \t\n\r");
 
