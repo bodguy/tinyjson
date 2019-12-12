@@ -37,10 +37,8 @@ int main() {
 
     std::cout << "time elapsed: " << elapsed << " ms" << std::endl;
     std::cout << value.print(true) << std::endl;
-//
     std::cout << newValue.print(true) << std::endl;
     std::cout << std::boolalpha << (value == newValue) << std::endl;
-    std::cout << newValue.print(true) << std::endl;
   }
 
   return 0;

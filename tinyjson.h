@@ -507,7 +507,7 @@ namespace tinyjson {
 
   bool parse_number(const char** token, double* number) {
     (*token) += strspn((*token), " \t");
-    const char* end = (*token) + strcspn((*token), " \t,\n\r}");
+    const char* end = (*token) + strcspn((*token), " \t,\n\r}]");
     if (end != (*token)) {
       double value;
       if (!atod((*token), end, &value)) return false;
