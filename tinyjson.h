@@ -333,6 +333,7 @@ namespace tinyjson {
     inline void set_value(boolean val) { type = ValueType::boolean_type; storage.bool_val = val; }
     inline void set_value(number val) { type = ValueType::number_type; storage.num_val = val; }
     inline void set_value(const string& val) { type = ValueType::string_type; storage.str_val = new std::string(val); }
+    inline void set_value(const char* val) { type = ValueType::string_type; storage.str_val = new std::string(val); }
     inline void set_value(const array& val) { type = ValueType::array_type; storage.array_val = new array(val); }
     inline void set_value(const object& val) { type = ValueType::object_type; storage.object_val = new object(val); }
     inline std::string to_string() const {
@@ -374,9 +375,24 @@ namespace tinyjson {
           return is_equal(storage.num_val, other.storage.num_val);
         case ValueType::boolean_type:
           return storage.bool_val == other.storage.bool_val;
-        case ValueType::object_type:
-        case ValueType::array_type:
-          return *this == other;
+        case ValueType::object_type: {
+          const object* l = this->storage.object_val;
+          const object* r = other.storage.object_val;
+
+          return (l->size() == r->size()) && std::equal(l->cbegin(), l->cend(), r->cbegin(),
+                  [](const auto& left, const auto& right) {
+                    return (left.first == right.first) && (left.second == right.second);
+                  });
+        }
+        case ValueType::array_type: {
+          const array* l = this->storage.array_val;
+          const array* r = other.storage.array_val;
+
+          return (l->size() == r->size()) && std::equal(l->cbegin(), l->cend(), r->cbegin(),
+                  [](const auto& left, const auto& right) {
+                    return (left == right);
+                  });
+        }
         default:
           return true;
       }
