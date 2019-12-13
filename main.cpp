@@ -31,12 +31,17 @@ int main() {
   object obj2;
   obj2.insert(std::make_pair("name", json_node("min123")));
   obj.insert(std::make_pair("empty", json_node(obj2)));
-  json_node arrValue({json_node(1.0), json_node(2.0), json_node(3.0)});
+  json_node arrValue({json_node(32.0), json_node(75.0), json_node(99.0)});
   obj.insert(std::make_pair("arr", arrValue));
   json_node newValue(obj);
 
   std::cout << newValue.serialize(true) << std::endl;
   std::cout << std::boolalpha << (node == newValue) << std::endl;
+
+  if (newValue.is<object>()) {
+   json_node& val = newValue.get("arr").get(1);
+   std::cout << val.serialize() << std::endl;
+  }
 
   return 0;
 }

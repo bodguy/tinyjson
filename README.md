@@ -2,15 +2,64 @@
 
 Blazing fast header only json parser
 
-### TODO
+### How to use
+
+sample json file.
+```json
+{
+  "key": "value",
+  "obj": {
+    "name": "hello"
+  },
+  "array": [
+    32,
+    99,
+    75
+  ]
+}
+```
+
+simple deserialize & serialize example.
+```c++
+json_node node1;
+std::string json = "{\"key\":\"value\",\"obj\":{\"name\":\"hello\"},\"array\":[32,99,75]}";
+bool result = tinyjson::deserialize(node1, json);
+if (result) {
+  // prettify print
+  std::cout << node1.serialize(true) << '\n';
+}
+```
+
+export to json example.
+```c++
+object root;
+root.insert(std::make_pair("key", json_node("value")));
+object inner;
+inner.insert(std::make_pair("name", json_node("hello")));
+root.insert(std::make_pair("obj", json_node(inner)));
+json_node arr({json_node(32.0), json_node(99.0), json_node(75.0)});
+root.insert(std::make_pair("array", arr));
+json_node node2(root);
+// prettify print
+std::cout << node2.serialize(true) << std::endl;
+```
+
+check both json are equals.
+```c++
+std::cout << std::boolalpha << (node1 == node2) << std::endl;
+// => true
+```
+
+procedural json node compare.
+```c++
+if (node1.is<object>()) {
+  json_node& val = node1.get("array").get(1);
+  std::cout << val.serialize() << std::endl;
+  // => 99
+}
+```
+
+### ToDo
 
 - utf8 support
 - user interface (value iterator)
-
-### DONE
-
-- ordered map
-- parse double with minimal precision problem
-- pretty print
-- object parsing
-- array parsing
