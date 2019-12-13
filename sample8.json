@@ -1,0 +1,7 @@
+{
+  "key1": "value",
+  "empty": {
+    "name": "min123"
+  },
+  "arr": [1,2,3]
+}
