@@ -340,15 +340,12 @@ namespace tinyjson {
       switch (type) {
         case node_type::string_type:
 //          delete storage.str_val;
-//          printf("String destruct\n");
           break;
         case node_type::array_type:
 //          delete storage.array_val;
-//          printf("Array destruct\n");
           break;
         case node_type::object_type:
 //          delete storage.object_val;
-//          printf("Object destruct\n");
           break;
         default:
           break;
@@ -360,27 +357,52 @@ namespace tinyjson {
     inline void set(const char* val) { type = node_type::string_type; storage.str_val = new std::string(val); }
     inline void set(const array& val) { type = node_type::array_type; storage.array_val = new array(val); }
     inline void set(const object& val) { type = node_type::object_type; storage.object_val = new object(val); }
-    inline json_node& get(const string& key) {
+    inline json_node& get_node(const string& key) {
       static json_node null_val;
       if (!is<object>()) return null_val;
       auto iter = storage.object_val->find(key);
       return iter != storage.object_val->end() ? iter->second : null_val;
     }
-    inline const json_node& get(const string& key) const {
+    inline const json_node& get_node(const string& key) const {
       static json_node null_val;
       if (!is<object>()) return null_val;
       typename object::const_iterator citer = storage.object_val->find(key);
       return citer != storage.object_val->cend() ? citer->second : null_val;
     }
-    inline json_node& get(const size_t index) {
+    inline json_node& get_element(const size_t index) {
       static json_node null_val;
       if (!is<array>()) return null_val;
       return index < storage.array_val->size() ? (*storage.array_val)[index] : null_val;
     }
-    inline const json_node& get(const size_t index) const {
+    inline const json_node& get_element(const size_t index) const {
       static json_node null_val;
       if (!is<array>()) return null_val;
       return index < storage.array_val->size() ? (*storage.array_val)[index] : null_val;
+    }
+    inline bool get(boolean& value) const {
+      if (!is<boolean>()) return false;
+      value = storage.bool_val;
+      return true;
+    }
+    inline bool get(number& value) const {
+      if (!is<number>()) return false;
+      value = storage.num_val;
+      return true;
+    }
+    inline bool get(string& value) const {
+      if (!is<string>()) return false;
+      value = *(storage.str_val);
+      return true;
+    }
+    inline bool get(array& value) const {
+      if (!is<array>()) return false;
+      value = *(storage.array_val);
+      return true;
+    }
+    inline bool get(object& value) const {
+      if (!is<object>()) return false;
+      value = *(storage.object_val);
+      return true;
     }
     inline bool has(const string& key) const {
       if(!is<object>()) return false;

@@ -39,8 +39,17 @@ int main() {
   std::cout << std::boolalpha << (node == newValue) << std::endl;
 
   if (newValue.is<object>()) {
-   json_node& val = newValue.get("arr").get(0);
+   json_node& val = newValue.get_node("arr").get_element(0);
    std::cout << val.serialize() << std::endl;
+   std::cout << "+===================" << std::endl;
+
+//   json_node& val2 = newValue.get_node("empty");
+   object empty_value;
+   if (newValue.get(empty_value)) {
+     for (auto& v : empty_value) {
+       std::cout << v.second.serialize(true) << std::endl;
+     }
+   }
   }
 
   return 0;
