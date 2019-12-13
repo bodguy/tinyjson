@@ -382,6 +382,10 @@ namespace tinyjson {
       if (!is<array>()) return null_val;
       return index < storage.array_val->size() ? (*storage.array_val)[index] : null_val;
     }
+    inline bool has(const string& key) const {
+      if(!is<object>()) return false;
+      return storage.object_val->find(key) != storage.object_val->cend();
+    }
     inline std::string to_string() const {
       switch (type) {
         case node_type::string_type:

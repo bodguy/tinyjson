@@ -39,7 +39,7 @@ int main() {
   std::cout << std::boolalpha << (node == newValue) << std::endl;
 
   if (newValue.is<object>()) {
-   json_node& val = newValue.get("arr").get(1);
+   json_node& val = newValue.get("arr").get(0);
    std::cout << val.serialize() << std::endl;
   }
 
