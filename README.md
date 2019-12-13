@@ -50,7 +50,7 @@ std::cout << std::boolalpha << (node1 == node2) << std::endl; // true
 procedural json node acquire.
 ```c++
 if (node1.is<object>()) {
-  json_node& val = node1.get("array").get(1);
+  json_node& val = node1.get_node("array").get_element(1);
   std::cout << val.serialize() << std::endl; // 99
 }
 ```
