@@ -330,6 +330,10 @@ namespace tinyjson {
     };
 
     inline json_node() : storage(), type(node_type::null_type) {}
+    json_node(const json_node& other) {
+      storage = other.storage;
+      type = other.type;
+    }
     explicit json_node(boolean val) : storage(), type(node_type::boolean_type) { storage.bool_val = val; }
     explicit json_node(number val) : storage(), type(node_type::number_type) { storage.num_val = val; }
     explicit json_node(const string& val) : storage(), type(node_type::string_type) { storage.str_val = new std::string(val); }
@@ -339,6 +343,7 @@ namespace tinyjson {
     inline ~json_node() {
       switch (type) {
         case node_type::string_type:
+            printf("str dtor: %s\n", storage.str_val->c_str());
 //          delete storage.str_val;
           break;
         case node_type::array_type:
