@@ -1,0 +1,76 @@
+{
+  "labels": {
+    "HAPROXY_0_MODE": "http",
+    "HAPROXY_GROUP": "external",
+    "HAPROXY_0_BACKEND_HEAD": "\nbackend {backend}\n  balance roundrobin\n  mode http\n  timeout server 120m\n  timeout client 120m\n",
+    "HAPROXY_0_VHOST": "vhost"
+  },
+  "id": "/product/api",
+  "backoffFactor": 1.15,
+  "backoffSeconds": 1,
+  "container": {
+    "portMappings": {
+      "containerPort": 8080,
+      "hostPort": 0,
+      "protocol": "tcp",
+      "portMappings": {
+        "containerPort": 8080,
+        "hostPort": 0,
+        "protocol": "tcp",
+        "servicePort": {
+          "name": "batch",
+          "protocol": "tcp",
+          "hostPort": {
+            "name": "batch",
+            "protocol": "tcp"
+          }
+        },
+        "name": "batch"
+      },
+      "servicePort": 10120,
+      "name": "batch"
+    },
+    "type": "DOCKER",
+    "docker": {
+      "image": "empty",
+      "forcePullImage": false,
+      "privileged": false
+    }
+  },
+  "cpus": 1,
+  "disk": 0,
+  "fetch": {
+    "uri": "tar.gz",
+    "extract": true,
+    "executable": false,
+    "cache": false
+  },
+  "healthChecks": {
+    "gracePeriodSeconds": 300,
+    "intervalSeconds": 60,
+    "maxConsecutiveFailures": 3,
+    "portIndex": 0,
+    "timeoutSeconds": 20,
+    "delaySeconds": 15,
+    "protocol": "HTTP",
+    "path": "health",
+    "ipProtocol": "IPv4"
+  },
+  "instances": 2,
+  "maxLaunchDelaySeconds": 3600,
+  "mem": 4096,
+  "gpus": 0,
+  "networks": {
+    "mode": "container/bridge"
+  },
+  "requirePorts": false,
+  "upgradeStrategy": {
+    "maximumOverCapacity": 1,
+    "minimumHealthCapacity": 1
+  },
+  "killSelection": "YOUNGEST_FIRST",
+  "unreachableStrategy": {
+    "inactiveAfterSeconds": 0,
+    "expungeAfterSeconds": 0
+  }
+}
