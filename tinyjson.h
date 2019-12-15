@@ -33,9 +33,6 @@ namespace tinyjson {
       linked_list.clear();
       hash_map.clear();
     }
-//    linked_hash_map(const linked_hash_map& other) {
-//      std::cout << "linked_hash_map copy ctor" << std::endl;
-//    }
 
     inline auto insert(const value_type& value) {
       linked_list.push_back(value);
