@@ -701,10 +701,8 @@ namespace tinyjson {
       // start of key
       if ((*token)[0] == token_type::double_quote) {
         (*token)++;
-        // empty key is not allowed
-        if ((*token)[0] == token_type::double_quote) return false;
         current_key = parse_string(token);
-        // no key found
+        // empty key is not allowed
         if (current_key.empty()) return false;
         continue;
       }
@@ -815,10 +813,8 @@ namespace tinyjson {
       // start of key
       if (token[0] == token_type::double_quote) {
         token++;
-        // empty string is not allowed
-        if (token[0] == token_type::double_quote) return false;
         current_key = parse_string(&token);
-        // no key found
+        // empty string is not allowed
         if (current_key.empty()) return false;
         continue;
       }
