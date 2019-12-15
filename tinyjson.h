@@ -694,6 +694,7 @@ namespace tinyjson {
       // end of object
       if ((*token)[0] == token_type::end_object) {
         (*token)++;
+        (*token) += strspn((*token), " \t\n\r");
         break;
       }
 
