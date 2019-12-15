@@ -59,20 +59,12 @@ namespace tinyjson {
 
     inline iterator find(const K& key) {
       typename std::unordered_map<K, iterator>::iterator iter = hash_map.find(key);
-      if (iter != hash_map.end()) {
-        return iter->second;
-      }
-
-      return end();
+      return iter != hash_map.end() ? iter->second : end();
     }
 
     inline const_iterator find(const K& key) const {
-      auto citer = hash_map.find(key);
-      if (citer != hash_map.cend()) {
-        return citer->second;
-      }
-
-      return cend();
+      typename std::unordered_map<K, iterator>::const_iterator citer = hash_map.find(key);
+      return citer != hash_map.cend() ? citer->second : cend();
     }
 
     inline iterator begin() { return linked_list.begin(); }
