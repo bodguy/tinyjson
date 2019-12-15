@@ -629,9 +629,6 @@ namespace tinyjson {
       double value;
       if (!atod((*token), end, &value)) return false;
       (*number) = value;
-      if (end[0] == token_type::comma) {
-        end++;
-      }
       (*token) = end;
       return true;
     }
@@ -675,10 +672,6 @@ namespace tinyjson {
       value.set(number);
     }
 
-    if ((*token)[0] == token_type::comma) {
-      (*token)++;
-    }
-
     return true;
   }
 
@@ -690,6 +683,10 @@ namespace tinyjson {
       (*token) += strspn((*token), " \t\n\r");
 
       if ((*token) == nullptr) return false;
+
+      if ((*token)[0] == token_type::comma) {
+        (*token)++;
+      }
 
       // end of object
       if ((*token)[0] == token_type::end_object) {
@@ -727,10 +724,6 @@ namespace tinyjson {
       }
     }
 
-    if ((*token)[0] == token_type::comma) {
-      (*token)++;
-    }
-
     value.set(root);
     return true;
   }
@@ -751,6 +744,7 @@ namespace tinyjson {
 
       if ((*token)[0] == token_type::comma) {
         (*token)++;
+        continue;
       }
 
       if ((*token)[0] == token_type::start_object) {
@@ -773,10 +767,6 @@ namespace tinyjson {
       }
     }
 
-    if ((*token)[0] == token_type::comma) {
-      (*token)++;
-    }
-
     value.set(root);
     return true;
   }
@@ -791,6 +781,10 @@ namespace tinyjson {
       token += strspn(token, " \t\n\r");
 
       if (token == nullptr) return false;
+
+      if (token[0] == token_type::comma) {
+        token++;
+      }
 
       // start of object
       if (token[0] == token_type::start_object) {
