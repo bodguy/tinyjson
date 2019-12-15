@@ -49,7 +49,7 @@ std::cout << std::boolalpha << (node1 == node2) << std::endl; // true
 
 procedural json node acquire.
 ```c++
-if (node1.is<object>()) {
+if (node1.is_object()) {
   json_node& val = node1.get_node("array").get_element(1);
   std::cout << val.serialize() << std::endl; // 99
 }
@@ -70,18 +70,18 @@ if (node2.get(root)) {
  for (auto& v : root) {
    std::cout << v.second.serialize(true) << std::endl;
  }
-  /*
-     "value"
-     {
-       "name": "min123"
-     }
-     [
-       32,
-       75,
-       99
-     ]
-   */
 }
+/*
+ "value"
+ {
+   "name": "min123"
+ }
+ [
+   32,
+   75,
+   99
+ ]
+*/
 ```
 
 ### ToDo
