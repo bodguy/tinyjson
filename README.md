@@ -23,7 +23,7 @@ simple deserialize & serialize example.
 ```c++
 json_node node1;
 std::string json = "{\"key\":\"value\",\"obj\":{\"name\":\"hello\"},\"array\":[32,99,75]}";
-bool result = tinyjson::deserialize(node1, json);
+bool result = tinyjson::parse(node1, json);
 if (result) {
   std::cout << node1.serialize(true) << '\n'; // prettify print
 }
