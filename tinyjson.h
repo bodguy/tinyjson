@@ -706,7 +706,6 @@ namespace tinyjson {
         current_key = parse_string(token);
         // no key found
         if (current_key.empty()) return false;
-        if ((*token)[0] == token_type::comma) token++;
         continue;
       }
 
@@ -758,20 +757,17 @@ namespace tinyjson {
 
       if ((*token)[0] == token_type::start_object) {
         (*token)++;
-        (*token) += strspn((*token), " \t\n\r");
         json_node current_obj;
         if (!parse_object(current_obj, token)) return false;
         root.emplace_back(current_obj);
         continue;
       } else if ((*token)[0] == token_type::start_array) {
         (*token)++;
-        (*token) += strspn((*token), " \t\n\r");
         json_node current_arr;
         if (!parse_array(current_arr, token)) return false;
         root.emplace_back(current_arr);
         continue;
       } else {
-        (*token) += strspn((*token), " \t\n\r");
         json_node current_value;
         if (!parse_value(current_value, token)) return false;
         root.emplace_back(current_value);
@@ -824,7 +820,6 @@ namespace tinyjson {
         current_key = parse_string(&token);
         // no key found
         if (current_key.empty()) return false;
-        if (token[0] == token_type::comma) token++;
         continue;
       }
 
