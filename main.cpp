@@ -6,13 +6,13 @@ using namespace tinyjson;
 int main() {
   json_node node;
   std::string json;
-  bool res = read_file("../sample/sample11.json", json);
+  bool res = read_file("../sample/sample12.json", json);
   if (!res) {
     std::cout << "file not found!" << std::endl;
     return -1;
   }
 
-  res = deserialize(node, json);
+  res = parse(node, json);
 
   if (!res) {
     std::cout << "json parse failed" << std::endl;
