@@ -637,6 +637,8 @@ namespace tinyjson {
   }
 
   std::string parse_string(const char** token) {
+    // skip "
+    if ((*token)[0] == token_type::double_quote) (*token)++;
     const char* end = (*token) + strcspn((*token), "\"");
     size_t offset = end - (*token);
     std::string key;
@@ -651,7 +653,6 @@ namespace tinyjson {
   bool parse_value(json_node& value, const char** token) {
     if ((*token)[0] == token_type::double_quote) {
       // string
-      (*token)++;
       std::string str_value = parse_string(token);
       value.set(str_value);
     } else if (0 == strncmp((*token), "true", 4)) {
@@ -679,9 +680,11 @@ namespace tinyjson {
     std::string current_key;
     object root;
 
+    // skip {
+    if ((*token)[0] == token_type::start_object) (*token)++;
+
     while ((*token)[0]) {
       (*token) += strspn((*token), " \t\n\r");
-
       if ((*token) == nullptr) return false;
 
       if ((*token)[0] == token_type::comma) {
@@ -691,13 +694,11 @@ namespace tinyjson {
       // end of object
       if ((*token)[0] == token_type::end_object) {
         (*token)++;
-        (*token) += strspn((*token), " \t\n\r");
         break;
       }
 
       // start of key
       if ((*token)[0] == token_type::double_quote) {
-        (*token)++;
         current_key = parse_string(token);
         // empty key is not allowed
         if (current_key.empty()) return false;
@@ -710,10 +711,8 @@ namespace tinyjson {
 
         json_node current_value;
         if ((*token)[0] == token_type::start_object) {
-          (*token)++;
           if (!parse_object(current_value, token)) return false;
         } else if ((*token)[0] == token_type::start_array) {
-          (*token)++;
           if (!parse_array(current_value, token)) return false;
         } else {
           if (!parse_value(current_value, token)) return false;
@@ -731,9 +730,11 @@ namespace tinyjson {
   bool parse_array(json_node& value, const char** token) {
     array root;
 
+    // skip [
+    if ((*token)[0] == token_type::start_array) (*token)++;
+
     while ((*token)[0]) {
       (*token) += strspn((*token), " \t\n\r");
-
       if ((*token) == nullptr) return false;
 
       // end of array
@@ -748,13 +749,11 @@ namespace tinyjson {
       }
 
       if ((*token)[0] == token_type::start_object) {
-        (*token)++;
         json_node current_obj;
         if (!parse_object(current_obj, token)) return false;
         root.emplace_back(current_obj);
         continue;
       } else if ((*token)[0] == token_type::start_array) {
-        (*token)++;
         json_node current_arr;
         if (!parse_array(current_arr, token)) return false;
         root.emplace_back(current_arr);
@@ -771,70 +770,18 @@ namespace tinyjson {
     return true;
   }
 
-  bool deserialize(json_node& value, const std::string& json) {
+  bool parse(json_node& value, const std::string& json) {
     const char* token = json.c_str();
-    bool start_of_object = false;
-    std::string current_key;
-    object root;
 
-    while ((*token)) {
-      token += strspn(token, " \t\n\r");
+    token += strspn(token, " \t\n\r");
+    if (token == nullptr) return false;
 
-      if (token == nullptr) return false;
-
-      if (token[0] == token_type::comma) {
-        token++;
-      }
-
-      // start of object
-      if (token[0] == token_type::start_object) {
-        start_of_object = true;
-        token++;
-        token += strspn(token, " \t\n\r");
-        // empty {} object
-        if (token[0] == token_type::end_object) return true;
-        continue;
-      }
-
-      // end of json
-      if (token[0] == token_type::end_object) {
-        if (!start_of_object) return false;
-        start_of_object = !start_of_object;
-        token++;
-        continue;
-      }
-
-      // start of key
-      if (token[0] == token_type::double_quote) {
-        token++;
-        current_key = parse_string(&token);
-        // empty string is not allowed
-        if (current_key.empty()) return false;
-        continue;
-      }
-
-      // start of value
-      if (token[0] == token_type::colon && start_of_object) {
-        token++;
-        token += strspn(token, " \t\n\r");
-
-        json_node current_value;
-        if (token[0] == token_type::start_object) {
-          token++;
-          if (!parse_object(current_value, &token)) return false;
-        } else if (token[0] == token_type::start_array) {
-          token++;
-          if (!parse_array(current_value, &token)) return false;
-        } else {
-          if (!parse_value(current_value, &token)) return false;
-        }
-        root.insert(std::make_pair(current_key, current_value));
-
-        continue;
-      }
+    if (token[0] == token_type::start_object) {
+      if (!parse_object(value, &token)) return false;
+    } else if (token[0] == token_type::start_array) {
+      if (!parse_array(value, &token)) return false;
     }
 
-    value.set(root);
     return true;
   }
 }
