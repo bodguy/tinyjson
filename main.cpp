@@ -6,7 +6,7 @@ using namespace tinyjson;
 int main() {
   json_node node;
   std::string json;
-  bool res = read_file("../sample/sample12.json", json);
+  bool res = read_file("../sample/sample9.json", json);
   if (!res) {
     std::cout << "file not found!" << std::endl;
     return -1;
@@ -19,8 +19,8 @@ int main() {
     return -1;
   }
 
-  if (node.is<array>()) {
-    json_node n = node.get_element(0).get_node("name");
+  if (node.is<object>()) {
+    json_node n = node.get_node("animations").get_element(0).get_node("samplers").get_element(0).get_node("interpolation");
     std::cout << n.serialize(true) << std::endl;
   }
 

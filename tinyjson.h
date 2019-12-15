@@ -24,14 +24,16 @@ namespace tinyjson {
   class linked_hash_map {
   public:
     typedef std::pair<K, V> value_type;
-    typedef int size_type;
+    typedef typename std::list<value_type>::size_type size_type;
     typedef typename std::list<value_type>::iterator iterator;
     typedef typename std::list<value_type>::const_iterator const_iterator;
 
   public:
-    linked_hash_map() : linked_list(), hash_map() {
-      linked_list.clear();
-      hash_map.clear();
+    linked_hash_map() : linked_list(), hash_map() {}
+    linked_hash_map(const linked_hash_map<K, V>& other) : linked_list(), hash_map() {
+      for(auto citer = other.cbegin(); citer != other.cend(); citer++) {
+        insert(*citer);
+      }
     }
 
     inline auto insert(const value_type& value) {
