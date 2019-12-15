@@ -44,7 +44,7 @@ namespace tinyjson {
       if (iter == hash_map.end()) {
         return false;
       }
-      linked_list.erase((*iter).second);
+      linked_list.erase(iter->second);
       hash_map.erase(iter);
       return true;
     }
@@ -58,21 +58,21 @@ namespace tinyjson {
     }
 
     inline iterator find(const K& key) {
-      auto iter = hash_map.find(key);
-      if (iter == hash_map.end()) {
-        return end();
+      typename std::unordered_map<K, iterator>::iterator iter = hash_map.find(key);
+      if (iter != hash_map.end()) {
+        return iter->second;
       }
 
-      return iter->second;
+      return end();
     }
 
     inline const_iterator find(const K& key) const {
       auto citer = hash_map.find(key);
-      if (citer == hash_map.cend()) {
-        return cend();
+      if (citer != hash_map.cend()) {
+        return citer->second;
       }
 
-      return citer->second;
+      return cend();
     }
 
     inline iterator begin() { return linked_list.begin(); }
@@ -376,13 +376,13 @@ namespace tinyjson {
     inline json_node& get_node(const string& key) {
       static json_node null_val;
       if (!is<object>()) return null_val;
-      auto iter = storage.object_val->find(key);
+      object::iterator iter = storage.object_val->find(key);
       return iter != storage.object_val->end() ? iter->second : null_val;
     }
     inline const json_node& get_node(const string& key) const {
       static json_node null_val;
       if (!is<object>()) return null_val;
-      typename object::const_iterator citer = storage.object_val->find(key);
+      object::const_iterator citer = storage.object_val->find(key);
       return citer != storage.object_val->cend() ? citer->second : null_val;
     }
     inline json_node& get_element(const size_t index) {

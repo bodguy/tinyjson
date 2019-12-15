@@ -19,7 +19,10 @@ int main() {
     return -1;
   }
 
-  std::cout << node.serialize(true) << std::endl;
+  if (node.is<array>()) {
+    json_node n = node.get_element(0).get_node("name");
+    std::cout << n.serialize(true) << std::endl;
+  }
 
   return 0;
 }
