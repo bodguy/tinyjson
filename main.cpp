@@ -6,7 +6,7 @@ using namespace tinyjson;
 int main() {
   json_node node;
   std::string json;
-  bool res = read_file("../sample/sample8.json", json);
+  bool res = read_file("../sample/sample9.json", json);
   if (!res) {
     std::cout << "file not found!" << std::endl;
     return -1;
