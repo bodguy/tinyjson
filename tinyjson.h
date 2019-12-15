@@ -330,6 +330,22 @@ namespace tinyjson {
     };
 
     inline json_node() : storage(), type(node_type::null_type) {}
+    inline json_node(const json_node& other) : storage(), type(other.type) {
+      switch (type) {
+        case node_type::string_type:
+          storage.str_val = new string(*other.storage.str_val);
+          break;
+        case node_type::array_type:
+          storage.array_val = new array(*other.storage.array_val);
+          break;
+        case node_type::object_type:
+          storage.object_val = new object(*other.storage.object_val);
+          break;
+        default:
+          storage = other.storage;
+          break;
+      }
+    }
     explicit json_node(boolean val) : storage(), type(node_type::boolean_type) { storage.bool_val = val; }
     explicit json_node(number val) : storage(), type(node_type::number_type) { storage.num_val = val; }
     explicit json_node(const string& val) : storage(), type(node_type::string_type) { storage.str_val = new std::string(val); }
@@ -339,13 +355,13 @@ namespace tinyjson {
     inline ~json_node() {
       switch (type) {
         case node_type::string_type:
-//          delete storage.str_val;
+          delete storage.str_val;
           break;
         case node_type::array_type:
-//          delete storage.array_val;
+          delete storage.array_val;
           break;
         case node_type::object_type:
-//          delete storage.object_val;
+          delete storage.object_val;
           break;
         default:
           break;
@@ -442,7 +458,21 @@ namespace tinyjson {
     inline json_node& operator=(const json_node& other) {
       if (this != &other) {
         type = other.type;
-        storage = other.storage;
+
+        switch (type) {
+          case node_type::string_type:
+            storage.str_val = new string(*other.storage.str_val);
+            break;
+          case node_type::array_type:
+            storage.array_val = new array(*other.storage.array_val);
+            break;
+          case node_type::object_type:
+            storage.object_val = new object(*other.storage.object_val);
+            break;
+          default:
+            storage = other.storage;
+            break;
+        }
       }
 
       return *this;
@@ -614,11 +644,7 @@ namespace tinyjson {
     size_t offset = end - (*token);
     std::string key;
     if (offset != 0) {
-      char* dest = (char*)malloc(sizeof(char) * offset + 1);
-      strncpy(dest, (*token), offset);
-      *(dest + offset) = 0;
-      key.assign(dest);
-      free(dest);
+      key.assign((*token), offset);
     }
 
     (*token) = ++end;
