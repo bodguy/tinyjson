@@ -8,6 +8,7 @@
 #include <cmath>
 #include <sstream>
 #include <fstream>
+#include <limits>
 
 namespace tinyjson {
   const double dbl_epsilon = std::numeric_limits<double>::epsilon();
@@ -369,53 +370,53 @@ namespace tinyjson {
     inline void set(const object& val) { type = node_type::object_type; storage.object_val = new object(val); }
     inline json_node& get_node(const string& key) {
       static json_node null_val;
-      if (!is<object>()) return null_val;
+      if (!is_object()) return null_val;
       object::iterator iter = storage.object_val->find(key);
       return iter != storage.object_val->end() ? iter->second : null_val;
     }
     inline const json_node& get_node(const string& key) const {
       static json_node null_val;
-      if (!is<object>()) return null_val;
+      if (!is_object()) return null_val;
       object::const_iterator citer = storage.object_val->find(key);
       return citer != storage.object_val->cend() ? citer->second : null_val;
     }
     inline json_node& get_element(const size_t index) {
       static json_node null_val;
-      if (!is<array>()) return null_val;
+      if (!is_array()) return null_val;
       return index < storage.array_val->size() ? (*storage.array_val)[index] : null_val;
     }
     inline const json_node& get_element(const size_t index) const {
       static json_node null_val;
-      if (!is<array>()) return null_val;
+      if (!is_array()) return null_val;
       return index < storage.array_val->size() ? (*storage.array_val)[index] : null_val;
     }
     inline bool get(boolean& value) const {
-      if (!is<boolean>()) return false;
+      if (!is_boolean()) return false;
       value = storage.bool_val;
       return true;
     }
     inline bool get(number& value) const {
-      if (!is<number>()) return false;
+      if (!is_number()) return false;
       value = storage.num_val;
       return true;
     }
     inline bool get(string& value) const {
-      if (!is<string>()) return false;
+      if (!is_string()) return false;
       value = *(storage.str_val);
       return true;
     }
     inline bool get(array& value) const {
-      if (!is<array>()) return false;
+      if (!is_array()) return false;
       value = *(storage.array_val);
       return true;
     }
     inline bool get(object& value) const {
-      if (!is<object>()) return false;
+      if (!is_object()) return false;
       value = *(storage.object_val);
       return true;
     }
     inline bool has(const string& key) const {
-      if(!is<object>()) return false;
+      if(!is_object()) return false;
       return storage.object_val->find(key) != storage.object_val->cend();
     }
     inline std::string to_string() const {
@@ -508,12 +509,11 @@ namespace tinyjson {
     inline bool operator!=(const json_node& other) const {
       return !(*this == other);
     }
-    template <typename T> inline bool is() const { return false; }
-    template <> inline bool is<boolean>() const { return type == node_type::boolean_type; }
-    template <> inline bool is<number>() const { return type == node_type::number_type; }
-    template <> inline bool is<string>() const { return type == node_type::string_type; }
-    template <> inline bool is<array>() const { return type == node_type::array_type; }
-    template <> inline bool is<object>() const { return type == node_type::object_type; }
+    inline bool is_boolean() const { return type == node_type::boolean_type; }
+    inline bool is_number() const { return type == node_type::number_type; }
+    inline bool is_string() const { return type == node_type::string_type; }
+    inline bool is_array() const { return type == node_type::array_type; }
+    inline bool is_object() const { return type == node_type::object_type; }
 
   private:
     static std::string make_indent(int indent) {

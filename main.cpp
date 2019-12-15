@@ -19,7 +19,7 @@ int main() {
     return -1;
   }
 
-  if (node.is<object>()) {
+  if (node.is_object()) {
     json_node n = node.get_node("animations").get_element(0).get_node("samplers").get_element(0).get_node("interpolation");
     std::cout << n.serialize(true) << std::endl;
   }
