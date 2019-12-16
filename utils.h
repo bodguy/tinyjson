@@ -33,26 +33,41 @@ private:
   std::chrono::time_point<std::chrono::high_resolution_clock> e;
 };
 
-// https://stackoverflow.com/questions/2602013/read-whole-ascii-file-into-c-stdstring
-bool read_file(const std::string& path, std::string& json_str) {
+bool read_file(const std::string& path, std::string& output) {
   std::ifstream ifs(path);
   if(!ifs) {
     return false;
   }
 
   ifs.seekg(0, std::ios::end);
-  json_str.reserve(ifs.tellg());
+  output.reserve(ifs.tellg());
   ifs.seekg(0, std::ios::beg);
 
-  json_str.assign((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+  output.assign((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
   return true;
 }
 
-#define BUF_SIZE 8192
+bool read_file_fast(const std::string& path, std::string& output) {
+  static const size_t BUF_SIZE = 8192;
+  int fd = open(path.c_str(), O_RDONLY);
+  if(fd == -1)
+    return false;
 
-void handle_error(const char* msg) {
-  perror(msg);
-  exit(255);
+  posix_fadvise(fd, 0, 0, 1);
+
+  char buf[BUF_SIZE + 1];
+
+  while(size_t bytes_read = read(fd, buf, BUF_SIZE)) {
+    if(bytes_read == (size_t)-1)
+      return false;
+    if (!bytes_read)
+      break;
+    output.append(buf);
+  }
+
+  close(fd);
+
+  return true;
 }
 
 bool mmap_file_read(const std::string& path, std::string& output) {
