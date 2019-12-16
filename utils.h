@@ -53,7 +53,10 @@ bool read_file_fast(const std::string& path, std::string& output) {
   if(fd == -1)
     return false;
 
+  // apple computer does not implement fadvise
+#ifndef __APPLE__
   posix_fadvise(fd, 0, 0, 1);
+#endif
 
   char buf[BUF_SIZE + 1];
 

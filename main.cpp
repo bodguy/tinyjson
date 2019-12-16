@@ -9,7 +9,7 @@ int main() {
   std::string json;
 
   watch.start();
-  bool res = mmap_file_read("../sample/large_file.json", json);
+  bool res = read_file_fast("../sample/large_file.json", json);
   watch.stop();
 
   if (!res) {
