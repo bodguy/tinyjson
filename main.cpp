@@ -4,25 +4,31 @@
 using namespace tinyjson;
 
 int main() {
+  StopWatch watch;
   json_node node;
   std::string json;
-  bool res = read_file("../sample/sample9.json", json);
+
+  watch.start();
+  bool res = mmap_file_read("../sample/large_file.json", json);
+  watch.stop();
+
   if (!res) {
     std::cout << "file not found!" << std::endl;
     return -1;
   }
 
-  res = parse(node, json);
+  std::cout << "read from file elapsed: " << watch.milli() << " ms" << std::endl;
 
-  if (!res) {
-    std::cout << "json parse failed" << std::endl;
-    return -1;
-  }
-
-  if (node.is_object()) {
-    json_node n = node.get_node("animations").get_element(0).get_node("samplers").get_element(0).get_node("interpolation");
-    std::cout << n.serialize(true) << std::endl;
-  }
+//  watch.start();
+//  res = parse(node, json);
+//  watch.stop();
+//
+//  if (!res) {
+//    std::cout << "json parse failed" << std::endl;
+//    return -1;
+//  }
+//
+//  std::cout << "parsing json elapsed: " << watch.milli() << " ms" << std::endl;
 
   return 0;
 }
