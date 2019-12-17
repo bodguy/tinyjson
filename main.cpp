@@ -9,7 +9,7 @@ int main() {
   std::string json;
 
   watch.start();
-  bool res = read_file_fast("../sample/sample8.json", json);
+  bool res = mmap_file_read("../sample/large_file.json", json);
   watch.stop();
 
   if (!res) {
@@ -29,7 +29,7 @@ int main() {
   }
 
   std::cout << "parsing json elapsed: " << watch.milli() << " ms" << std::endl;
-  std::cout << node.serialize(true) << std::endl;
+//  std::cout << node.serialize(true) << std::endl;
 
   return 0;
 }
