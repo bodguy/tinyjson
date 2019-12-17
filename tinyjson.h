@@ -624,13 +624,13 @@ namespace tinyjson {
   typedef json_node::array array;
   typedef json_node::object object;
 
-  bool parse_number(const char** token, double* number);
-  std::string parse_string(const char** token);
+  bool parse_number(double* number, const char** token);
+  void parse_string(std::string& str, const char** token);
   bool parse_value(json_node& value, const char** token);
   bool parse_object(json_node& value, const char** token);
   bool parse_array(json_node& value, const char** token);
 
-  bool parse_number(const char** token, double* number) {
+  bool parse_number(double* number, const char** token) {
     (*token) += strspn((*token), " \t");
     const char* end = (*token) + strcspn((*token), " \t,\n\r}]");
     if (end != (*token)) {
@@ -644,24 +644,23 @@ namespace tinyjson {
     return false;
   }
 
-  std::string parse_string(const char** token) {
+  void parse_string(std::string& str, const char** token) {
     // skip "
     if ((*token)[0] == token_type::double_quote) (*token)++;
     const char* end = (*token) + strcspn((*token), "\"");
     size_t offset = end - (*token);
-    std::string key;
     if (offset != 0) {
-      key.assign((*token), offset);
+      str.assign((*token), offset);
     }
 
     (*token) = ++end;
-    return key;
   }
 
   bool parse_value(json_node& value, const char** token) {
     if ((*token)[0] == token_type::double_quote) {
       // string
-      std::string str_value = parse_string(token);
+      std::string str_value;
+      parse_string(str_value, token);
       value.set(str_value);
     } else if (0 == strncmp((*token), "true", 4)) {
       // boolean true
@@ -677,7 +676,7 @@ namespace tinyjson {
     } else {
       // number
       double number = 0.0;
-      if (!parse_number(token, &number)) return false;
+      if (!parse_number(&number, token)) return false;
       value.set(number);
     }
 
@@ -707,7 +706,7 @@ namespace tinyjson {
 
       // start of key
       if ((*token)[0] == token_type::double_quote) {
-        current_key = parse_string(token);
+        parse_string(current_key, token);
         // empty key is not allowed
         if (current_key.empty()) return false;
         continue;
