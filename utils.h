@@ -59,7 +59,6 @@ bool read_file_fast(const std::string& path, std::string& output) {
 #endif
 
   char buf[BUF_SIZE + 1];
-
   while(size_t bytes_read = read(fd, buf, BUF_SIZE)) {
     if(bytes_read == (size_t)-1)
       return false;

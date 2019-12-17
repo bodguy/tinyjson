@@ -38,7 +38,7 @@ namespace tinyjson {
     }
 
     inline auto insert(const value_type& value) {
-      linked_list.push_back(value);
+      linked_list.emplace_back(value);
       return hash_map.insert(std::make_pair(value.first, std::prev(linked_list.end())));
     }
 
@@ -326,7 +326,6 @@ namespace tinyjson {
 
     inline json_node() : storage(), type(node_type::null_type) {}
     inline json_node(const json_node& other) : storage(), type(other.type) {
-      std::cout << "copy" << std::endl;
       switch (type) {
         case node_type::string_type:
           storage.str_val = new string(*other.storage.str_val);
@@ -354,9 +353,15 @@ namespace tinyjson {
           delete storage.str_val;
           break;
         case node_type::array_type:
+          for (json_node* elem : *(storage.array_val)) {
+            delete elem;
+          }
           delete storage.array_val;
           break;
         case node_type::object_type:
+          for (const auto& elem : *(storage.object_val)) {
+            delete elem.second;
+          }
           delete storage.object_val;
           break;
         default:
@@ -369,28 +374,28 @@ namespace tinyjson {
     inline void set(const char* val) { type = node_type::string_type; storage.str_val = new std::string(val); }
     inline void set(const array& val) { type = node_type::array_type; storage.array_val = new array(val); }
     inline void set(const object& val) { type = node_type::object_type; storage.object_val = new object(val); }
-//    inline json_node& get_node(const string& key) {
-//      static json_node null_val;
-//      if (!is_object()) return null_val;
-//      object::iterator iter = storage.object_val->find(key);
-//      return iter != storage.object_val->end() ? iter->second : null_val;
-//    }
-//    inline const json_node& get_node(const string& key) const {
-//      static json_node null_val;
-//      if (!is_object()) return null_val;
-//      object::const_iterator citer = storage.object_val->find(key);
-//      return citer != storage.object_val->cend() ? citer->second : null_val;
-//    }
-//    inline json_node*& get_element(const size_t index) {
-//      static json_node null_val;
-//      if (!is_array()) return null_val;
-//      return index < storage.array_val->size() ? (*storage.array_val)[index] : null_val;
-//    }
-//    inline const json_node& get_element(const size_t index) const {
-//      static json_node null_val;
-//      if (!is_array()) return null_val;
-//      return index < storage.array_val->size() ? (*storage.array_val)[index] : null_val;
-//    }
+    inline void set(string* val) { type = node_type::string_type; storage.str_val = val; }
+    inline void set(array* val) { type = node_type::array_type; storage.array_val = val; }
+    inline void set(object* val) { type = node_type::object_type; storage.object_val = val; }
+
+    inline json_node* get_node(const string& key) {
+      if (!is_object()) return nullptr;
+      object::iterator iter = storage.object_val->find(key);
+      return iter != storage.object_val->end() ? iter->second : nullptr;
+    }
+    inline const json_node* get_node(const string& key) const {
+      if (!is_object()) return nullptr;
+      object::const_iterator citer = storage.object_val->find(key);
+      return citer != storage.object_val->cend() ? citer->second : nullptr;
+    }
+    inline json_node* get_element(const size_t index) {
+      if (!is_array()) return nullptr;
+      return index < storage.array_val->size() ? (*storage.array_val)[index] : nullptr;
+    }
+    inline const json_node* get_element(const size_t index) const {
+      if (!is_array()) return nullptr;
+      return index < storage.array_val->size() ? (*storage.array_val)[index] : nullptr;
+    }
     inline bool get(boolean& value) const {
       if (!is_boolean()) return false;
       value = storage.bool_val;
@@ -464,7 +469,6 @@ namespace tinyjson {
     }
     inline std::string serialize(bool prettify = false) const { return _serialize(prettify ? 0 : -1); }
     inline json_node& operator=(const json_node& other) {
-      std::cout << "copy" << std::endl;
       if (this != &other) {
         type = other.type;
 
@@ -685,7 +689,7 @@ namespace tinyjson {
 
   bool parse_object(json_node& value, const char** token) {
     std::string current_key;
-    object root;
+    object* root = new object();
 
     // skip {
     if ((*token)[0] == token_type::start_object) (*token)++;
@@ -724,7 +728,7 @@ namespace tinyjson {
         } else {
           if (!parse_value(*current_value, token)) return false;
         }
-        root.insert(std::make_pair(current_key, current_value));
+        root->insert(std::make_pair(current_key, current_value));
 
         continue;
       }
@@ -735,7 +739,7 @@ namespace tinyjson {
   }
 
   bool parse_array(json_node& value, const char** token) {
-    array root;
+    array* root = new array();
 
     // skip [
     if ((*token)[0] == token_type::start_array) (*token)++;
@@ -755,20 +759,18 @@ namespace tinyjson {
         continue;
       }
 
+      json_node* current_value = new json_node();
       if ((*token)[0] == token_type::start_object) {
-        json_node* current_obj = new json_node();
-        if (!parse_object(*current_obj, token)) return false;
-        root.emplace_back(current_obj);
+        if (!parse_object(*current_value, token)) return false;
+        root->emplace_back(current_value);
         continue;
       } else if ((*token)[0] == token_type::start_array) {
-        json_node* current_arr = new json_node();
-        if (!parse_array(*current_arr, token)) return false;
-        root.emplace_back(current_arr);
+        if (!parse_array(*current_value, token)) return false;
+        root->emplace_back(current_value);
         continue;
       } else {
-        json_node* current_value = new json_node();
         if (!parse_value(*current_value, token)) return false;
-        root.emplace_back(current_value);
+        root->emplace_back(current_value);
         continue;
       }
     }
