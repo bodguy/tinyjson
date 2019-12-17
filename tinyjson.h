@@ -315,7 +315,7 @@ namespace tinyjson {
     typedef double number;
     typedef std::string string;
     typedef std::vector<json_node*> array;
-    typedef linked_hash_map<std::string, json_node*> object;
+    typedef std::unordered_map<std::string, json_node*> object;
     union Storage {
       boolean bool_val;
       number num_val;
@@ -666,15 +666,15 @@ namespace tinyjson {
       std::string str_value;
       parse_string(str_value, token);
       value.set(str_value);
-    } else if (0 == strncmp((*token), "true", 4)) {
+    } else if (((*token)[0] == 't') && (0 == strncmp((*token), "true", 4))) {
       // boolean true
       value.set(true);
       (*token) += 4;
-    } else if (0 == strncmp((*token), "false", 5)) {
+    } else if (((*token)[0] == 'f') && (0 == strncmp((*token), "false", 5))) {
       // boolean false
       value.set(false);
       (*token) += 5;
-    } else if (0 == strncmp((*token), "null", 4)) {
+    } else if (((*token)[0] == 'n') && (0 == strncmp((*token), "null", 4))) {
       // null
       (*token) += 4;
     } else {
