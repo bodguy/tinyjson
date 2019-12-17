@@ -315,7 +315,7 @@ namespace tinyjson {
     typedef double number;
     typedef std::string string;
     typedef std::vector<json_node*> array;
-    typedef std::unordered_map<std::string, json_node*> object;
+    typedef linked_hash_map<std::string, json_node*> object;
     union Storage {
       boolean bool_val;
       number num_val;
