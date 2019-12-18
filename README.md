@@ -86,13 +86,22 @@ if (node2.get(root)) {
 
 ### Performance
 
-performance test with large json file which has about 190 MB size:
+performance test on macos catalina and clang with large json file which has about 190 MB size:
 
 ```
 deserialize: 10776.6 ms
 serialize: 12282.1 ms
 ```
 
+another performance test on windows 10 and msvc with same json file:
+
+```
+deserialize: 5592.36 ms
+serialize: XX ms
+```
+
 ### ToDo
 
 - utf8 support
+- json validation
+- more convenient api

@@ -110,7 +110,7 @@ namespace tinyjson {
 
   // https://stackoverflow.com/questions/2302969/convert-a-float-to-a-string
   static double PRECISION = 0.00000000000001;
-  static int MAX_NUMBER_STRING_SIZE = 32;
+  static const int MAX_NUMBER_STRING_SIZE = 32;
   static char * dtoa(char *s, double n) {
     // handle special cases
     if (std::isnan(n)) {
@@ -606,18 +606,19 @@ namespace tinyjson {
           iter++ = ']';
           break;
         }
-        case node_type::null_type:
-          static const char* n = "null";
+        case node_type::null_type: {
+		  static const char* n = "null";
           std::copy(n, n + 4, iter);
           break;
+		}
         case node_type::number_type: {
           char buf[MAX_NUMBER_STRING_SIZE];
           const char* c = dtoa(buf, storage.num_val);
           std::copy(c, c + strlen(c), iter);
           break;
         }
-        case node_type::boolean_type:
-          static const char* t = "true";
+        case node_type::boolean_type: {
+		  static const char* t = "true";
           static const char* f = "false";
           if (storage.bool_val) {
             std::copy(t, t + 4, iter);
@@ -625,6 +626,7 @@ namespace tinyjson {
             std::copy(f, f + 5, iter);
           }
           break;
+		}
       }
     }
 
