@@ -6,8 +6,6 @@
 #include <list>
 #include <string>
 #include <cmath>
-#include <sstream>
-#include <fstream>
 #include <limits>
 #include <algorithm>
 
@@ -539,13 +537,13 @@ namespace tinyjson {
     inline bool is_object() const { return type == node_type::object_type; }
 
   private:
-    inline void make_indent(int indent, std::back_insert_iterator<string>& sstream) const {
-      sstream++ = '\n';
+    inline void make_indent(int indent, std::back_insert_iterator<string>& iter) const {
+      iter++ = '\n';
       for (int i = 0; i < indent * indent_size; i++) {
-        sstream++ = ' ';
+        iter++ = ' ';
       }
     }
-    inline void serialize_str(const std::string& str, std::back_insert_iterator<string> iter) const {
+    inline void serialize_str(const std::string& str, std::back_insert_iterator<string>& iter) const {
       iter++ = '\"';
       std::copy(str.begin(), str.end(), iter);
       iter++ = '\"';

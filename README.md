@@ -97,7 +97,7 @@ another performance test on windows 10 and msvc with same json file:
 
 ```
 deserialize: 5592.36 ms
-serialize: XX ms
+serialize: 5552.61 ms
 ```
 
 ### ToDo
