@@ -1,4 +1,4 @@
-#include "tinyjson.h"
+#include "../tinyjson.h"
 #include "utils.h"
 
 using namespace tinyjson;

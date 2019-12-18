@@ -1,9 +1,8 @@
 /*
 /sample/large_file.json
 
-!/main.cpp
+!/benchmark/
 !/tinyjson.h
-!/utils.h
 !/sample/
 !/CMakeLists.txt
 !/README.md

@@ -25,7 +25,7 @@ json_node node1;
 string json = R"({"key":"value","obj":{"name":"hello"},"array":[32,99,75]})";
 bool result = tinyjson::parse(node1, json);
 if (result) {
-std::cout << node1.serialize(true) << '\n'; // prettify print
+  std::cout << node1.serialize(true) << '\n'; // prettify print
 }
 ```
 
@@ -103,5 +103,8 @@ serialize: 5552.61 ms
 ### ToDo
 
 - utf8 support
+- error message
 - json validation
-- more convenient api
+- more convenient API like json++
+- SAX support
+- UBJSON foramt support
