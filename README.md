@@ -84,6 +84,15 @@ if (node2.get(root)) {
 */
 ```
 
+### Performance
+
+performance test with large json file which has about 190 MB size:
+
+```
+deserialize: 10776.6 ms
+serialize: 12282.1 ms
+```
+
 ### ToDo
 
 - utf8 support

@@ -9,6 +9,7 @@
 #include <sstream>
 #include <fstream>
 #include <limits>
+#include <algorithm>
 
 namespace tinyjson {
   const double dbl_epsilon = std::numeric_limits<double>::epsilon();
@@ -467,7 +468,11 @@ namespace tinyjson {
           return true;
       }
     }
-    inline std::string serialize(bool prettify = false) const { return _serialize(prettify ? 0 : -1); }
+    inline std::string serialize(bool prettify = false) const {
+      std::string s;
+      _serialize(prettify ? 0 : -1, std::back_inserter(s));
+      return s;
+    }
     inline json_node& operator=(const json_node& other) {
       if (this != &other) {
         type = other.type;
@@ -534,88 +539,93 @@ namespace tinyjson {
     inline bool is_object() const { return type == node_type::object_type; }
 
   private:
-    static std::string make_indent(int indent) {
-      std::stringstream sstream;
-      sstream << '\n';
+    inline void make_indent(int indent, std::back_insert_iterator<string>& sstream) const {
+      sstream++ = '\n';
       for (int i = 0; i < indent * indent_size; i++) {
-        sstream << ' ';
+        sstream++ = ' ';
       }
-      return sstream.str();
     }
-    static std::string serialize_str(const std::string& str) {
-      return "\"" + str + "\"";
+    inline void serialize_str(const std::string& str, std::back_insert_iterator<string> iter) const {
+      iter++ = '\"';
+      std::copy(str.begin(), str.end(), iter);
+      iter++ = '\"';
     }
-    inline std::string _serialize(int indent) const {
-      std::stringstream sstream;
-
+    inline void _serialize(int indent, std::back_insert_iterator<string> iter) const {
       switch (type) {
         case node_type::string_type:
-          sstream << serialize_str(*(storage.str_val));
+          serialize_str(*(storage.str_val), iter);
           break;
         case node_type::object_type: {
-          sstream << '{';
+          iter++ = '{';
           if (indent != -1) {
             ++indent;
           }
           for (auto citer = storage.object_val->cbegin(); citer != storage.object_val->cend(); ++citer) {
             if (citer != storage.object_val->cbegin()) {
-              sstream << ',';
+              iter++ = ',';
             }
             if (indent != -1) {
-              sstream << make_indent(indent);
+              make_indent(indent, iter);
             }
-            sstream << serialize_str(citer->first) << ':';
+            serialize_str(citer->first, iter);
+            iter++ = ':';
             if (indent != -1) {
-              sstream << ' ';
+              iter++ = ' ';
             }
-            sstream << citer->second->_serialize(indent);
+            citer->second->_serialize(indent, iter);
           }
           if (indent != -1) {
             --indent;
             if (!storage.object_val->empty()) {
-              sstream << make_indent(indent);
+              make_indent(indent, iter);
             }
           }
-          sstream << '}';
+          iter++ = '}';
           break;
         }
         case node_type::array_type: {
-          sstream << '[';
+          iter++ = '[';
           if (indent != -1) {
             ++indent;
           }
           for (auto citer = storage.array_val->cbegin(); citer != storage.array_val->cend(); ++citer) {
             if (citer != storage.array_val->cbegin()) {
-              sstream << ',';
+              iter++ = ',';
             }
             if (indent != -1) {
-              sstream << make_indent(indent);
+              make_indent(indent, iter);
             }
-            sstream << (*citer)->_serialize(indent);
+            (*citer)->_serialize(indent, iter);
           }
           if (indent != -1) {
             --indent;
             if (!storage.array_val->empty()) {
-              sstream << make_indent(indent);
+              make_indent(indent, iter);
             }
           }
-          sstream << ']';
+          iter++ = ']';
           break;
         }
         case node_type::null_type:
-          sstream << "null";
+          static const char* n = "null";
+          std::copy(n, n + 4, iter);
           break;
         case node_type::number_type: {
           char buf[MAX_NUMBER_STRING_SIZE];
-          sstream << std::string(dtoa(buf, storage.num_val));
+          const char* c = dtoa(buf, storage.num_val);
+          std::copy(c, c + strlen(c), iter);
           break;
         }
         case node_type::boolean_type:
-          sstream << (storage.bool_val ? "true" : "false");
+          static const char* t = "true";
+          static const char* f = "false";
+          if (storage.bool_val) {
+            std::copy(t, t + 4, iter);
+          } else {
+            std::copy(f, f + 5, iter);
+          }
           break;
       }
-
-      return sstream.str();
     }
 
     Storage storage;
