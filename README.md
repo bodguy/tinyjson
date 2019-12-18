@@ -89,8 +89,8 @@ if (node2.get(root)) {
 performance test on macos catalina and clang with large json file which has about 190 MB size:
 
 ```
-deserialize: 10776.6 ms
-serialize: 12282.1 ms
+deserialize: 10562.8 ms
+serialize: 10841.7 ms
 ```
 
 another performance test on windows 10 and msvc with same json file:
