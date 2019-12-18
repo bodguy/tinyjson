@@ -9,7 +9,7 @@ int main() {
   std::string json;
 
   watch.start();
-  bool res = read_file_fast("../sample/sample8.json", json);
+  bool res = read_file_fast("../sample/large_file.json", json);
   watch.stop();
 
   if (!res) {
@@ -29,7 +29,12 @@ int main() {
   }
 
   std::cout << "parsing json elapsed: " << watch.milli() << " ms" << std::endl;
-  std::cout << node.serialize(true) << std::endl;
+
+  watch.start();
+  std::string serialized = node.serialize(true);
+  watch.stop();
+
+  std::cout << "serialize json elapsed: " << watch.milli() << " ms" << std::endl;
 
   return 0;
 }
