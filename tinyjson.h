@@ -9,9 +9,12 @@
 #include <limits>
 #include <algorithm>
 
+//#define USE_UNICODE
+#define INDENT_SIZE 2
+
 namespace tinyjson {
   const double dbl_epsilon = std::numeric_limits<double>::epsilon();
-  const unsigned int indent_size = 2;
+
   constexpr bool is_digit(const char x) {
     return static_cast<unsigned int>((x) - '0') < static_cast<unsigned int>(10);
   }
@@ -312,7 +315,11 @@ namespace tinyjson {
   public:
     typedef bool boolean;
     typedef double number;
+#ifndef USE_UNICODE
     typedef std::string string;
+#else
+    typedef std::u16string string;
+#endif
     typedef std::vector<json_node*> array;
     typedef linked_hash_map<string, json_node*> object;
     union Storage {
@@ -343,7 +350,12 @@ namespace tinyjson {
     explicit json_node(boolean val) : storage(), type(node_type::boolean_type) { storage.bool_val = val; }
     explicit json_node(number val) : storage(), type(node_type::number_type) { storage.num_val = val; }
     explicit json_node(const string& val) : storage(), type(node_type::string_type) { storage.str_val = new string(val); }
+
+#ifndef USE_UNICODE
     explicit json_node(const char* val) : storage(), type(node_type::string_type) { storage.str_val = new string(val); }
+#else
+    explicit json_node(const char16_t* val) : storage(), type(node_type::string_type) { storage.str_val = new string(val); }
+#endif
     explicit json_node(const array& val) : storage(), type(node_type::array_type) { storage.array_val = new array(val); }
     explicit json_node(const object& val) : storage(), type(node_type::object_type) { storage.object_val = new object(val); }
     inline ~json_node() {
@@ -370,7 +382,11 @@ namespace tinyjson {
     inline void set(boolean val) { type = node_type::boolean_type; storage.bool_val = val; }
     inline void set(number val) { type = node_type::number_type; storage.num_val = val; }
     inline void set(const string& val) { type = node_type::string_type; storage.str_val = new string(val); }
+#ifndef USE_UNICODE
     inline void set(const char* val) { type = node_type::string_type; storage.str_val = new string(val); }
+#else
+    inline void set(const char16_t* val) { type = node_type::string_type; storage.str_val = new string(val); }
+#endif
     inline void set(const array& val) { type = node_type::array_type; storage.array_val = new array(val); }
     inline void set(const object& val) { type = node_type::object_type; storage.object_val = new object(val); }
     inline void set(string* val) { type = node_type::string_type; storage.str_val = val; }
@@ -436,7 +452,7 @@ namespace tinyjson {
           return 0;
       }
     }
-    inline string to_string() const {
+    inline std::string to_string() const {
       switch (type) {
         case node_type::string_type:
           return "string";
@@ -540,7 +556,7 @@ namespace tinyjson {
   private:
     inline void make_indent(int indent, std::back_insert_iterator<string>& iter) const {
       iter++ = '\n';
-      for (int i = 0; i < indent * indent_size; i++) {
+      for (int i = 0; i < indent * INDENT_SIZE; i++) {
         iter++ = ' ';
       }
     }
@@ -644,6 +660,7 @@ namespace tinyjson {
   bool parse_value(json_node& value, const char** token);
   bool parse_object(json_node& value, const char** token);
   bool parse_array(json_node& value, const char** token);
+  bool parse(json_node& value, const std::string& json);
 
   bool parse_number(double* number, const char** token) {
     (*token) += strspn((*token), " \t");
@@ -790,7 +807,7 @@ namespace tinyjson {
     return true;
   }
 
-  bool parse(json_node& value, const string& json) {
+  bool parse(json_node& value, const std::string& json) {
     const char* token = json.c_str();
 
     token += strspn(token, " \t\n\r");

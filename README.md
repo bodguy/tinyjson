@@ -2,6 +2,15 @@
 
 Blazing fast header only json parser
 
+### Compiler
+
+compiled and tested on c++14 or upper version 
+
+### Option
+
+- USE_UNICODE: determines u16string and u8string.
+- INDENT_SIZE: involves serializing output indent size.
+
 ### How to use
 
 sample json file.
