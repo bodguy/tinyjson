@@ -31,7 +31,7 @@ int main() {
   std::cout << "parsing json elapsed: " << watch.milli() << " ms" << std::endl;
 
   watch.start();
-  std::string serialized = node.serialize(true);
+  std::string serialized = node.serialize(false);
   watch.stop();
 
   std::cout << "serialize json elapsed: " << watch.milli() << " ms" << std::endl;
