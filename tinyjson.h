@@ -575,7 +575,8 @@ namespace tinyjson {
           if (indent != -1) {
             ++indent;
           }
-          for (auto citer = storage.object_val->cbegin(); citer != storage.object_val->cend(); ++citer) {
+          for (auto citer = storage.object_val->cbegin(), cend = storage.object_val->cend();
+            citer != cend; ++citer) {
             if (citer != storage.object_val->cbegin()) {
               iter++ = ',';
             }
@@ -603,7 +604,8 @@ namespace tinyjson {
           if (indent != -1) {
             ++indent;
           }
-          for (auto citer = storage.array_val->cbegin(); citer != storage.array_val->cend(); ++citer) {
+          for (auto citer = storage.array_val->cbegin(), cend = storage.array_val->cend();
+            citer != cend; ++citer) {
             if (citer != storage.array_val->cbegin()) {
               iter++ = ',';
             }
@@ -622,10 +624,10 @@ namespace tinyjson {
           break;
         }
         case node_type::null_type: {
-		  static const char* n = "null";
+		      static const char* n = "null";
           std::copy(n, n + 4, iter);
           break;
-		}
+		    }
         case node_type::number_type: {
           char buf[MAX_NUMBER_STRING_SIZE];
           const char* c = dtoa(buf, storage.num_val);
@@ -633,7 +635,7 @@ namespace tinyjson {
           break;
         }
         case node_type::boolean_type: {
-		  static const char* t = "true";
+		      static const char* t = "true";
           static const char* f = "false";
           if (storage.bool_val) {
             std::copy(t, t + 4, iter);
@@ -641,7 +643,7 @@ namespace tinyjson {
             std::copy(f, f + 5, iter);
           }
           break;
-		}
+		    }
       }
     }
 
@@ -680,9 +682,8 @@ namespace tinyjson {
     // skip "
     if ((*token)[0] == token_type::double_quote) (*token)++;
     const char* end = (*token) + strcspn((*token), "\"");
-    size_t offset = end - (*token);
-    if (offset != 0) {
-      str.assign((*token), offset);
+    if ((*token) != end) {
+      str.assign((*token), end - (*token));
     }
 
     (*token) = ++end;
