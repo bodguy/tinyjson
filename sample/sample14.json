@@ -1,0 +1,117 @@
+[
+  {
+    "arguments": {},
+    "auto_delete": false,
+    "backing_queue_status": {
+      "avg_ack_egress_rate": 0,
+      "avg_ack_ingress_rate": 0,
+      "avg_egress_rate": 0,
+      "avg_ingress_rate": 0,
+      "delta": [
+        "delta",
+        "undefined",
+        0,
+        0,
+        "undefined"
+      ],
+      "len": 8,
+      "mode": "default",
+      "next_seq_id": 8,
+      "q1": 0,
+      "q2": 0,
+      "q3": 0,
+      "q4": 8,
+      "target_ram_count": "infinity"
+    },
+    "consumer_utilisation": null,
+    "consumers": 0,
+    "durable": true,
+    "effective_policy_definition": {},
+    "exclusive": false,
+    "exclusive_consumer_tag": null,
+    "garbage_collection": {
+      "fullsweep_after": 65535,
+      "max_heap_size": 0,
+      "min_bin_vheap_size": 46422,
+      "min_heap_size": 233,
+      "minor_gcs": 495
+    },
+    "head_message_timestamp": null,
+    "idle_since": "2019-12-23 7:23:27",
+    "memory": 25988,
+    "message_bytes": 779,
+    "message_bytes_paged_out": 0,
+    "message_bytes_persistent": 779,
+    "message_bytes_ram": 779,
+    "message_bytes_ready": 779,
+    "message_bytes_unacknowledged": 0,
+    "message_stats": {
+      "ack": 0,
+      "ack_details": {
+        "rate": 0
+      },
+      "deliver": 0,
+      "deliver_details": {
+        "rate": 0
+      },
+      "deliver_get": 29,
+      "deliver_get_details": {
+        "rate": 0
+      },
+      "deliver_no_ack": 0,
+      "deliver_no_ack_details": {
+        "rate": 0
+      },
+      "get": 29,
+      "get_details": {
+        "rate": 0
+      },
+      "get_empty": 5,
+      "get_empty_details": {
+        "rate": 0
+      },
+      "get_no_ack": 0,
+      "get_no_ack_details": {
+        "rate": 0
+      },
+      "publish": 8,
+      "publish_details": {
+        "rate": 0
+      },
+      "redeliver": 24,
+      "redeliver_details": {
+        "rate": 0
+      }
+    },
+    "messages": 8,
+    "messages_details": {
+      "rate": 0
+    },
+    "messages_paged_out": 0,
+    "messages_persistent": 8,
+    "messages_ram": 8,
+    "messages_ready": 8,
+    "messages_ready_details": {
+      "rate": 0
+    },
+    "messages_ready_ram": 8,
+    "messages_unacknowledged": 0,
+    "messages_unacknowledged_details": {
+      "rate": 0
+    },
+    "messages_unacknowledged_ram": 0,
+    "name": "feed.queue.notify",
+    "node": "rabbit@fae2603cf28f",
+    "operator_policy": null,
+    "policy": null,
+    "recoverable_slaves": null,
+    "reductions": 3816951,
+    "reductions_details": {
+      "rate": 0
+    },
+    "single_active_consumer_tag": null,
+    "state": "running",
+    "type": "classic",
+    "vhost": "/"
+  }
+]
