@@ -555,8 +555,9 @@ namespace tinyjson {
 
   private:
     inline void make_indent(int indent, std::back_insert_iterator<string>& iter) const {
+      size_t indent_size = indent * INDENT_SIZE;
       iter++ = '\n';
-      for (int i = 0; i < indent * INDENT_SIZE; i++) {
+      for (int i = 0; i < indent_size; ++i) {
         iter++ = ' ';
       }
     }
@@ -575,9 +576,10 @@ namespace tinyjson {
           if (indent != -1) {
             ++indent;
           }
-          for (auto citer = storage.object_val->cbegin(), cend = storage.object_val->cend();
-            citer != cend; ++citer) {
-            if (citer != storage.object_val->cbegin()) {
+          auto cbegin = storage.object_val->cbegin();
+          auto cend = storage.object_val->cend();
+          for (auto citer = cbegin; citer != cend; ++citer) {
+            if (citer != cbegin) {
               iter++ = ',';
             }
             if (indent != -1) {
@@ -604,9 +606,10 @@ namespace tinyjson {
           if (indent != -1) {
             ++indent;
           }
-          for (auto citer = storage.array_val->cbegin(), cend = storage.array_val->cend();
-            citer != cend; ++citer) {
-            if (citer != storage.array_val->cbegin()) {
+          auto cbegin = storage.array_val->cbegin();
+          auto cend = storage.array_val->cend();
+          for (auto citer = cbegin; citer != cend; ++citer) {
+            if (citer != cbegin) {
               iter++ = ',';
             }
             if (indent != -1) {
