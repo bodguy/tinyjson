@@ -277,8 +277,7 @@ serialize: 5552.61 ms
 
 ### Macro
 
-- USE_UNICODE: determines u16string and u8string.
-- INDENT_SIZE: involves serializing output indent size.
+- USE_UNICODE: determines which one use from u16string and u8string.
 
 ### ToDo
 

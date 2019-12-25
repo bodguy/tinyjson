@@ -10,7 +10,6 @@
 #include <algorithm>
 
 #define USE_UNICODE 0
-#define INDENT_SIZE 2
 
 namespace tinyjson {
   const double dbl_epsilon = std::numeric_limits<double>::epsilon();
@@ -443,10 +442,10 @@ namespace tinyjson {
           return true;
       }
     }
-    inline string serialize(bool prettify = false) const {
+    inline string serialize(bool prettify = false, unsigned int indent_size = 2) const {
       string s;
       std::back_insert_iterator<string> iter = std::back_inserter(s);
-      _serialize(prettify ? 0 : -1, iter);
+      _serialize(prettify ? 0 : -1, iter, indent_size);
       return s;
     }
     inline json_node& operator=(const json_node& other) {
@@ -511,16 +510,6 @@ namespace tinyjson {
       return *this;
     }
     inline json_node& operator=(const object& other) {
-      clear();
-      set(other);
-      return *this;
-    }
-    inline json_node& operator=(const array* other) {
-      clear();
-      set(other);
-      return *this;
-    }
-    inline json_node& operator=(const object* other) {
       clear();
       set(other);
       return *this;
@@ -651,10 +640,10 @@ namespace tinyjson {
     inline void set(string* val) { type = node_type::string_type; storage.str_val = val; }
     inline void set(array* val) { type = node_type::array_type; storage.array_val = val; }
     inline void set(object* val) { type = node_type::object_type; storage.object_val = val; }
-    inline void make_indent(int indent, std::back_insert_iterator<string>& iter) const {
-      size_t indent_size = indent * INDENT_SIZE;
+    inline void make_indent(int indent, std::back_insert_iterator<string>& iter, unsigned int indent_size) const {
+      size_t size = indent * indent_size;
       iter++ = '\n';
-      for (int i = 0; i < indent_size; ++i) {
+      for (int i = 0; i < size; ++i) {
         iter++ = ' ';
       }
     }
@@ -663,7 +652,7 @@ namespace tinyjson {
       std::copy(str.begin(), str.end(), iter);
       iter++ = '\"';
     }
-    inline void _serialize(int indent, std::back_insert_iterator<string>& iter) const {
+    inline void _serialize(int indent, std::back_insert_iterator<string>& iter, unsigned int indent_size) const {
       switch (type) {
         case node_type::string_type:
           serialize_str(*(storage.str_val), iter);
@@ -680,19 +669,19 @@ namespace tinyjson {
               iter++ = ',';
             }
             if (indent != -1) {
-              make_indent(indent, iter);
+              make_indent(indent, iter, indent_size);
             }
             serialize_str(citer->first, iter);
             iter++ = ':';
             if (indent != -1) {
               iter++ = ' ';
             }
-            citer->second->_serialize(indent, iter);
+            citer->second->_serialize(indent, iter, indent_size);
           }
           if (indent != -1) {
             --indent;
             if (!storage.object_val->empty()) {
-              make_indent(indent, iter);
+              make_indent(indent, iter, indent_size);
             }
           }
           iter++ = '}';
@@ -710,14 +699,14 @@ namespace tinyjson {
               iter++ = ',';
             }
             if (indent != -1) {
-              make_indent(indent, iter);
+              make_indent(indent, iter, indent_size);
             }
-            (*citer)->_serialize(indent, iter);
+            (*citer)->_serialize(indent, iter, indent_size);
           }
           if (indent != -1) {
             --indent;
             if (!storage.array_val->empty()) {
-              make_indent(indent, iter);
+              make_indent(indent, iter, indent_size);
             }
           }
           iter++ = ']';
