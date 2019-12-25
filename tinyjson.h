@@ -555,6 +555,37 @@ namespace tinyjson {
     inline bool operator!=(const json_node& other) const {
       return !(*this == other);
     }
+    inline bool operator==(const string& other) const {
+      if (type != node_type::string_type) {
+        return false;
+      }
+
+      return *(storage.str_val) == other;
+    }
+    inline bool operator!=(const string& other) const {
+      return !(*this == other);
+    }
+    inline bool operator==(const double other) const {
+      if (type != node_type::number_type) {
+        return false;
+      }
+
+      return is_equal(storage.num_val, other);
+    }
+    inline bool operator!=(const double other) const {
+      return !(*this == other);
+    }
+    inline bool operator==(const int other) const {
+      if (type != node_type::number_type) {
+        return false;
+      }
+
+      return is_equal(storage.num_val, (double)other);
+    }
+    inline bool operator!=(const int other) const {
+      return !(*this == other);
+    }
+    inline bool is_null() const { return type == node_type::null_type; }
     inline bool is_boolean() const { return type == node_type::boolean_type; }
     inline bool is_number() const { return type == node_type::number_type; }
     inline bool is_string() const { return type == node_type::string_type; }

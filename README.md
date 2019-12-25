@@ -4,41 +4,130 @@ Blazing fast header only json parser
 
 ### Compiler
 
-compiled and tested on c++14 or upper version 
+compiled and tested on c++14 or upper version.
 
-### Option
+### One Minute guide
 
-- USE_UNICODE: determines u16string and u8string.
-- INDENT_SIZE: involves serializing output indent size.
-
-### How to use
-
-sample json file.
-```json
-{
-  "key": "value",
-  "obj": {
-    "name": "hello"
-  },
-  "array": [
-    32,
-    99,
-    75
-  ]
-}
-```
-
-simple deserialize & serialize example.
 ```c++
-json_node node1;
+tinyjson::json_node node1;
 string json = R"({"key":"value","obj":{"name":"hello"},"array":[32,99,75]})";
 bool result = tinyjson::parse(node1, json);
 if (result) {
-  std::cout << node1.serialize(true) << '\n'; // prettify print
+  // true -> prettify serialize
+  // false -> unformatted serialize (default)
+  std::cout << node1.serialize(true) << '\n';
 }
 ```
 
-export to json example.
+### Tutorial
+
+In RFC 4627, only objects or arrays were allowed as root values of json.
+suppose that, node is root of json.
+
+```c++
+assert(node.is_object());
+assert(node.is_array());
+```
+
+Let's query about "key1" is exists or not.
+
+```c++
+assert(node.has("key1"));
+assert(node["key1"].is_object());
+std::cout << node["key1"].serialize(true) << std::endl;
+```
+```json
+{
+    "hello": true,
+    "hello2": false,
+    "hello3": null,
+    "hello4": [
+      1,
+      1.33,
+      99.8,
+      21.92
+    ]
+}
+```
+
+what about array? below sample code shows how to loop through all the elements.
+
+```c++
+tinyjson::json_node& array_node = node["key1"]["hello4"];
+assert(array_node.is_array());
+for (size_t i = 0; i < array_node.length(); ++i) {
+  std::cout << "hello4[" << i << "]: " << array_node[i].get_number() << std::endl;
+}
+```
+```
+hello4[0]: 1
+hello4[1]: 1.33
+hello4[2]: 99.8
+hello4[3]: 21.92
+```
+
+or, using c++11 range based loop.
+note that, array is just a stl vector container. you can use standard iterator as you know.
+
+```c++
+tinyjson::json_node& array_node = node["key1"]["hello4"];
+assert(array_node.is_array());
+tinyjson::array& arr = array_node.get_array();
+int i = 0;
+for (auto& n : arr) {
+  std::cout << "hello4[" << i << "]: " << n.get_number() << std::endl;
+  i++;
+}
+```
+```
+hello4[0]: 1
+hello4[1]: 1.33
+hello4[2]: 99.8
+hello4[3]: 21.92
+```
+
+querying object is same as array.
+note that, object is almost same as ordered map. so any kind of standard iterator can be used.
+
+```c++
+tinyjson::object& obj_node = node["key1"].get_object();
+for (auto& v : obj_node) {
+  std::cout << v.second.serialize(true) << std::endl;
+}
+```
+```
+true
+false
+null
+[
+    1,
+    1.33,
+    99.8,
+    21.92
+]
+```
+
+comparing values is simple like string compare.
+
+```c++
+assert(node == node2);
+json_node& first = node.get_node("key1").get_node("hello4").get_element(3);
+assert(first == 21.92);
+```
+
+there are four kind of operators:
+
+```c++
+inline bool operator==(const json_node& other);
+inline bool operator==(const string& other);
+inline bool operator==(const double other);
+inline bool operator==(const int other);
+```
+
+operator with json_node compare two json_node as deep equal. the other three operator compare with json_node inner value. 
+
+export to json is a bit complex.
+
 ```c++
 object root;
 root.insert(std::make_pair("key", new json_node("value")));
@@ -51,51 +140,7 @@ json_node node2(root);
 std::cout << node2.serialize(true) << std::endl; // prettify print
 ```
 
-check both json are equals.
-```c++
-std::cout << std::boolalpha << (node1 == node2) << std::endl; // true
-```
-
-procedural json node acquire.
-```c++
-if (node1.is_object()) {
-  json_node& val = node1.get_node("array").get_element(1);
-  // OR json_node& val = node1["array"][1];
-  std::cout << val.serialize() << std::endl; // 99
-}
-```
-
-procedural json node acquire 2.
-```c++
-// get specific string value
-json_node& key1_node = node2.get_node("key1");
-// OR json_node& key1_node = node2["key1"];
-string key1_value;
-if (key1_node.get(key1_value)) {
- std::cout << key1_value << std::endl; // value
-}
-
-// loop from root of json object
-object root;
-if (node2.get(root)) {
- for (auto& v : root) {
-   std::cout << v.second.serialize(true) << std::endl;
- }
-}
-/*
- "value"
- {
-   "name": "min123"
- }
- [
-   32,
-   75,
-   99
- ]
-*/
-```
-
-### Performance
+### Performance benchmark
 
 performance test on macos catalina and clang with large json file which has about 190 MB size:
 
@@ -111,11 +156,13 @@ deserialize: 5592.36 ms
 serialize: 5552.61 ms
 ```
 
+### Macro
+
+- USE_UNICODE: determines u16string and u8string.
+- INDENT_SIZE: involves serializing output indent size.
+
 ### ToDo
 
 - utf8 support
 - error message
 - json validation
-- more convenient API like json++
-- SAX support
-- UBJSON foramt support
