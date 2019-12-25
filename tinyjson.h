@@ -33,6 +33,9 @@ namespace tinyjson {
 
   public:
     linked_hash_map() : linked_list(), hash_map() {}
+    linked_hash_map(size_t size) : linked_list(), hash_map() {
+      hash_map.reserve(size);
+    }
     linked_hash_map(const linked_hash_map<K, V>& other) : linked_list(), hash_map() {
       for(auto citer = other.cbegin(); citer != other.cend(); citer++) {
         insert(*citer);
@@ -332,22 +335,7 @@ namespace tinyjson {
     };
 
     inline json_node() : storage(), type(node_type::null_type) {}
-    inline json_node(const json_node& other) : storage(), type(other.type) {
-      switch (type) {
-        case node_type::string_type:
-          storage.str_val = new string(*other.storage.str_val);
-          break;
-        case node_type::array_type:
-          storage.array_val = new array(*other.storage.array_val);
-          break;
-        case node_type::object_type:
-          storage.object_val = new object(*other.storage.object_val);
-          break;
-        default:
-          storage = other.storage;
-          break;
-      }
-    }
+    inline json_node(const json_node& other) : storage(), type() { *this = other; }
     explicit json_node(boolean val) : storage(), type(node_type::boolean_type) { storage.bool_val = val; }
     explicit json_node(number val) : storage(), type(node_type::number_type) { storage.num_val = val; }
     explicit json_node(const string& val) : storage(), type(node_type::string_type) { storage.str_val = new string(val); }
@@ -357,8 +345,8 @@ namespace tinyjson {
 #else
     explicit json_node(const char* val) : storage(), type(node_type::string_type) { storage.str_val = new string(val); }
 #endif
-    explicit json_node(const array& val) : storage(), type(node_type::array_type) { storage.array_val = new array(val); }
-    explicit json_node(const object& val) : storage(), type(node_type::object_type) { storage.object_val = new object(val); }
+    explicit json_node(const array& val) : storage(), type() { set(val); }
+    explicit json_node(const object& val) : storage(), type() { set(val); }
     inline ~json_node() {
       clear();
     }
@@ -464,19 +452,19 @@ namespace tinyjson {
     inline json_node& operator=(const json_node& other) {
       if (this != &other) {
         clear();
-        type = other.type;
 
-        switch (type) {
+        switch (other.type) {
           case node_type::string_type:
-            storage.str_val = new string(*other.storage.str_val);
+            set(*other.storage.str_val);
             break;
           case node_type::array_type:
-            storage.array_val = new array(*other.storage.array_val);
+            set(*other.storage.array_val);
             break;
           case node_type::object_type:
-            storage.object_val = new object(*other.storage.object_val);
+            set(*other.storage.object_val);
             break;
           default:
+            type = other.type;
             storage = other.storage;
             break;
         }
@@ -523,6 +511,16 @@ namespace tinyjson {
       return *this;
     }
     inline json_node& operator=(const object& other) {
+      clear();
+      set(other);
+      return *this;
+    }
+    inline json_node& operator=(const array* other) {
+      clear();
+      set(other);
+      return *this;
+    }
+    inline json_node& operator=(const object* other) {
       clear();
       set(other);
       return *this;
@@ -631,8 +629,25 @@ namespace tinyjson {
 #else
     inline void set(const char* val) { type = node_type::string_type; storage.str_val = new string(val); }
 #endif
-    inline void set(const array& val) { type = node_type::array_type; storage.array_val = new array(val); }
-    inline void set(const object& val) { type = node_type::object_type; storage.object_val = new object(val); }
+    inline void set(const array& val) {
+      type = node_type::array_type;
+      storage.array_val = new array();
+      storage.array_val->reserve(val.size());
+      // deep copy
+      for (auto e : val) {
+        storage.array_val->emplace_back(new json_node(*e));
+      }
+    }
+    inline void set(const object& val) {
+      type = node_type::object_type;
+      storage.object_val = new object(val.size());
+      // deep copy
+      auto begin = val.cbegin();
+      auto end = val.cend();
+      for (; begin != end; ++begin) {
+        storage.object_val->insert(std::make_pair(begin->first, new json_node(*(begin->second))));
+      }
+    }
     inline void set(string* val) { type = node_type::string_type; storage.str_val = val; }
     inline void set(array* val) { type = node_type::array_type; storage.array_val = val; }
     inline void set(object* val) { type = node_type::object_type; storage.object_val = val; }

@@ -68,13 +68,13 @@ root.insert(std::make_pair("key", new json_node("value")));
 node["key1"]["hello4"] = root;
 std::cout << node.serialize(true) << std::endl;
 ```
-```
+```json
 {
     "hello": true,
     "hello2": false,
     "hello3": null,
     "hello4": {
-        "key": "value"
+      "key": "value"
     }
 }
 ```
@@ -86,7 +86,7 @@ node["key1"]["hello4"] = "hello world";
 node["key1"]["hello3"] = 10.22;
 std::cout << node.serialize(true) << std::endl;
 ```
-```
+```json
 {
     "hello": true,
     "hello2": false,
@@ -100,10 +100,45 @@ but beware that, assigning null json value should be as follows.
 ```c++
 node["key1"]["hello"] = json_node();
 ```
+```
+"hello": null
+```
 
 beacuse empty json_node is same as null json value.
 
-there are another case assigning same json_node instance. this will cause a undefined behaviour like infinite loop.  
+```c++
+object root;
+root.insert(std::make_pair("key", new json_node("value")));
+object inner;
+inner.insert(std::make_pair("name", new json_node("hello")));
+root.insert(std::make_pair("obj", new json_node(inner)));
+auto* arr = new json_node({new json_node(32.0), new json_node(99.0), new json_node(75.0)});
+root.insert(std::make_pair("array", arr));
+json_node node2(root);
+node["key1"]["hello4"] = node2;
+```
+```json
+{
+  "key1": {
+    "hello": true,
+    "hello2": false,
+    "hello3": null,
+    "hello4": {
+      "key": "value",
+      "obj": {
+        "name": "hello"
+      },
+      "array": [
+        32,
+        99,
+        75
+      ]
+    }
+  }
+}
+```
+
+there are another case assigning same json_node instance. this will cause a undefined behaviour like memory leak.
 
 ### Query array
 
@@ -205,17 +240,32 @@ root.insert(std::make_pair("array", arr));
 json_node node2(root);
 std::cout << node2.serialize(true) << std::endl; // prettify print
 ```
+```json
+{
+  "key": "value",
+  "obj": {
+    "name": "hello"
+  },
+  "array": [
+    32,
+    99,
+    75
+  ]
+}
+```
 
 ### Performance benchmark
 
-performance test on macos catalina and clang with large json file which has about 190 MB size:
+test with json file which has about 190 MB size.
+
+clang 9.0.0:
 
 ```
 deserialize: 10238.3 ms
 serialize: 10451.3 ms
 ```
 
-another performance test on windows 10 and msvc with same json file:
+msvc 16:
 
 ```
 deserialize: 5592.36 ms
