@@ -20,7 +20,7 @@ int main() {
   std::cout << "read from file elapsed: " << watch.milli() << " ms" << std::endl;
 
   watch.start();
-  res = parse(node, json);
+  res = json_parser::parse(node, json);
   watch.stop();
 
   if (!res) {
@@ -35,6 +35,11 @@ int main() {
   watch.stop();
 
   std::cout << "serialize json elapsed: " << watch.milli() << " ms" << std::endl;
+  object root;
+  root.insert(std::make_pair("key", new json_node("value")));
+  node["key2"]["hello4"] = root;
+  node["key2"]["hello"] = json_node();
+  std::cout << node.serialize(true) << std::endl;
 
   return 0;
 }

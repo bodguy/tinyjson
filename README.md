@@ -11,7 +11,7 @@ compiled and tested on c++14 or upper version.
 ```c++
 tinyjson::json_node node1;
 string json = R"({"key":"value","obj":{"name":"hello"},"array":[32,99,75]})";
-bool result = tinyjson::parse(node1, json);
+bool result = tinyjson::json_parser::parse(node1, json);
 if (result) {
   // true -> prettify serialize
   // false -> unformatted serialize (default)
@@ -27,6 +27,8 @@ In RFC 4627, only objects or arrays were allowed as root values of json.
 assert(node.is_object());
 assert(node.is_array());
 ```
+
+### Get the values
 
 Let's query about "key1" is exists or not.
 
@@ -49,7 +51,58 @@ std::cout << node["key1"].serialize(true) << std::endl;
 }
 ```
 
+### Set the values
+
+setting values are simple as getting values. just take a value from [] operator as operand and assign it to other values.
+
+```c++
+object root;
+root.insert(std::make_pair("key", new json_node("value")));
+node["key1"]["hello4"] = root;
+std::cout << node.serialize(true) << std::endl;
+```
+```
+{
+    "hello": true,
+    "hello2": false,
+    "hello3": null,
+    "hello4": {
+        "key": "value"
+    }
+}
+```
+
+as you know, assigning is also work with number, array, object, boolean and string.
+
+```c++
+node["key1"]["hello4"] = "hello world";
+node["key1"]["hello3"] = 10.22;
+std::cout << node.serialize(true) << std::endl;
+```
+```
+{
+    "hello": true,
+    "hello2": false,
+    "hello3": 10.22,
+    "hello4": "hello world"
+}
+```
+
+but beware that, assigning null json value should be as follows.
+
+```c++
+node["key1"]["hello"] = json_node();
+```
+
+beacuse empty json_node is same as null json value.
+
+there are another case assigning same json_node instance. this will cause a undefined behaviour like infinite loop.  
+
+### Query array
+
 what about array? below sample code shows how to loop through all the elements.
+but beware that, json_node.length() function works with string, array and object as well.  
+so make sure json_node is array type before looping array elements.
 
 ```c++
 tinyjson::json_node& array_node = node["key1"]["hello4"];
@@ -73,8 +126,8 @@ tinyjson::json_node& array_node = node["key1"]["hello4"];
 assert(array_node.is_array());
 tinyjson::array& arr = array_node.get_array();
 int i = 0;
-for (auto& n : arr) {
-  std::cout << "hello4[" << i << "]: " << n.get_number() << std::endl;
+for (auto n : arr) {
+  std::cout << "hello4[" << i << "]: " << n->get_number() << std::endl;
   i++;
 }
 ```
@@ -84,6 +137,8 @@ hello4[1]: 1.33
 hello4[2]: 99.8
 hello4[3]: 21.92
 ```
+
+### Query object
 
 querying object is same as array.  
 note that, object is almost same as ordered map. so any kind of standard iterator can be used.
@@ -106,11 +161,14 @@ null
 ]
 ```
 
-comparing values is simple like string compare.
+### Compare values
+
+comparing values are simple like string compare.
 
 ```c++
 assert(node == node2);
 json_node& first = node.get_node("key1").get_node("hello4").get_element(3);
+// OR node["key1"]["hello4"][3];
 assert(first == 21.92);
 ```
 
@@ -125,7 +183,9 @@ inline bool operator==(const int other);
 
 operator with json_node compare two json_node as deep equal. the other three operator compare with json_node inner value. 
 
-export to json is a bit complex.
+### Export to json
+
+export to json is a bit complex now.
 
 ```c++
 object root;
