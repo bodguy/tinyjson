@@ -51,6 +51,13 @@ std::cout << node["key1"].serialize(true) << std::endl;
 }
 ```
 
+[] based approach is convenient like accessing plain javascript object.
+below code shows function based approach which is a bit messy.
+
+```c++
+std::cout << node.get_node("key1").serialize(true) << std::endl;
+``` 
+
 ### Set the values
 
 setting values are simple as getting values. just take a value from [] operator as operand and assign it to other values.
@@ -100,7 +107,7 @@ there are another case assigning same json_node instance. this will cause a unde
 
 ### Query array
 
-what about array? below sample code shows how to loop through all the elements.
+what about array? below sample code shows how to loop through all the elements.  
 but beware that, json_node.length() function works with string, array and object as well.  
 so make sure json_node is array type before looping array elements.
 
