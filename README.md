@@ -59,17 +59,19 @@ std::cout << std::boolalpha << (node1 == node2) << std::endl; // true
 procedural json node acquire.
 ```c++
 if (node1.is_object()) {
-  json_node* val = node1.get_node("array")->get_element(1);
-  std::cout << val->serialize() << std::endl; // 99
+  json_node& val = node1.get_node("array").get_element(1);
+  // OR json_node& val = node1["array"][1];
+  std::cout << val.serialize() << std::endl; // 99
 }
 ```
 
 procedural json node acquire 2.
 ```c++
 // get specific string value
-json_node* key1_node = node2.get_node("key1");
+json_node& key1_node = node2.get_node("key1");
+// OR json_node& key1_node = node2["key1"];
 string key1_value;
-if (key1_node->get(key1_value)) {
+if (key1_node.get(key1_value)) {
  std::cout << key1_value << std::endl; // value
 }
 
@@ -77,7 +79,7 @@ if (key1_node->get(key1_value)) {
 object root;
 if (node2.get(root)) {
  for (auto& v : root) {
-   std::cout << v.second->serialize(true) << std::endl;
+   std::cout << v.second.serialize(true) << std::endl;
  }
 }
 /*
@@ -98,8 +100,8 @@ if (node2.get(root)) {
 performance test on macos catalina and clang with large json file which has about 190 MB size:
 
 ```
-deserialize: 10562.8 ms
-serialize: 10841.7 ms
+deserialize: 10238.3 ms
+serialize: 10451.3 ms
 ```
 
 another performance test on windows 10 and msvc with same json file:

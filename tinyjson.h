@@ -393,23 +393,27 @@ namespace tinyjson {
     inline void set(array* val) { type = node_type::array_type; storage.array_val = val; }
     inline void set(object* val) { type = node_type::object_type; storage.object_val = val; }
 
-    inline json_node* get_node(const string& key) {
-      if (!is_object()) return nullptr;
+    inline json_node& get_node(const string& key) {
+      static json_node null_node;
+      if (!is_object()) return null_node;
       object::iterator iter = storage.object_val->find(key);
-      return iter != storage.object_val->end() ? iter->second : nullptr;
+      return iter != storage.object_val->end() ? *(iter->second) : null_node;
     }
-    inline const json_node* get_node(const string& key) const {
-      if (!is_object()) return nullptr;
+    inline const json_node& get_node(const string& key) const {
+      static const json_node null_node;
+      if (!is_object()) return null_node;
       object::const_iterator citer = storage.object_val->find(key);
-      return citer != storage.object_val->cend() ? citer->second : nullptr;
+      return citer != storage.object_val->cend() ? *(citer->second) : null_node;
     }
-    inline json_node* get_element(const size_t index) {
-      if (!is_array()) return nullptr;
-      return index < storage.array_val->size() ? (*storage.array_val)[index] : nullptr;
+    inline json_node& get_element(const size_t index) {
+      static json_node null_node;
+      if (!is_array()) return null_node;
+      return index < storage.array_val->size() ? *(*storage.array_val)[index] : null_node;
     }
-    inline const json_node* get_element(const size_t index) const {
-      if (!is_array()) return nullptr;
-      return index < storage.array_val->size() ? (*storage.array_val)[index] : nullptr;
+    inline const json_node& get_element(const size_t index) const {
+      static const json_node null_node;
+      if (!is_array()) return null_node;
+      return index < storage.array_val->size() ? *(*storage.array_val)[index] : null_node;
     }
     inline bool get(boolean& value) const {
       if (!is_boolean()) return false;
@@ -436,6 +440,10 @@ namespace tinyjson {
       value = *(storage.object_val);
       return true;
     }
+    inline json_node& operator[](size_t index) { return this->get_element(index); }
+    inline const json_node& operator[](size_t index) const { return this->get_element(index); }
+    inline json_node& operator[](const string& key) { return this->get_node(key); }
+    inline const json_node& operator[](const string& key) const { return this->get_node(key); }
     inline bool has(const string& key) const {
       if(!is_object()) return false;
       return storage.object_val->find(key) != storage.object_val->cend();
