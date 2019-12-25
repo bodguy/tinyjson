@@ -52,7 +52,7 @@ std::cout << node["key1"].serialize(true) << std::endl;
 ```
 
 [] based approach is convenient like accessing plain javascript object.
-below code shows function based approach which is a bit messy.
+below code shows function based approach equivalent which is a bit messy.
 
 ```c++
 std::cout << node.get_node("key1").serialize(true) << std::endl;
@@ -60,7 +60,7 @@ std::cout << node.get_node("key1").serialize(true) << std::endl;
 
 ### Set the values
 
-setting values are simple as getting values. just take a value from [] operator as operand and assign it to other values.
+setting values are simple as getting values. just take a value from [] operator and assign other values to this.
 
 ```c++
 object root;
