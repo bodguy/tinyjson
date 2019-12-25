@@ -22,7 +22,6 @@ if (result) {
 ### Tutorial
 
 In RFC 4627, only objects or arrays were allowed as root values of json.
-suppose that, node is root of json.
 
 ```c++
 assert(node.is_object());
@@ -66,7 +65,7 @@ hello4[2]: 99.8
 hello4[3]: 21.92
 ```
 
-or, using c++11 range based loop.
+or, using c++11 range based loop.  
 note that, array is just a stl vector container. you can use standard iterator as you know.
 
 ```c++
@@ -86,7 +85,7 @@ hello4[2]: 99.8
 hello4[3]: 21.92
 ```
 
-querying object is same as array.
+querying object is same as array.  
 note that, object is almost same as ordered map. so any kind of standard iterator can be used.
 
 ```c++
