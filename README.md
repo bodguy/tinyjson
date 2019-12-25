@@ -106,6 +106,8 @@ node["key1"]["hello"] = json_node();
 
 beacuse empty json_node is same as null json value.
 
+you can assign a json_node directly.
+
 ```c++
 object root;
 root.insert(std::make_pair("key", new json_node("value")));
@@ -256,7 +258,8 @@ std::cout << node2.serialize(true) << std::endl; // prettify print
 
 ### Performance benchmark
 
-test with json file which has about 190 MB size.
+tested on MackBook Pro 2.5Ghz Quad core i7, 16GB RAM  
+with json file which has about 190 MB size.
 
 clang 9.0.0:
 
