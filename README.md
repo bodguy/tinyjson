@@ -4,27 +4,40 @@ Blazing fast header only json parser
 
 ### Compiler
 
-compiled and tested on c++14 or upper version.
+compiled and tested on c++14 or higher version.
 
 ### One Minute guide
 
 ```c++
-tinyjson::json_node node1;
+tinyjson::json_node node;
 std::string err;
 string json = R"({"key":"value","obj":{"name":"hello"},"array":[32,99,75]})";
-bool result = tinyjson::json_parser::parse(node1, json, err);
+bool result = tinyjson::json_parser::parse(node, json, err);
 if (!result) {
   std::cout << err << std::endl;
   return -1;
 }
 // true -> prettify serialize
 // false -> unformatted serialize (default)
-std::cout << node1.serialize(true) << '\n';
+std::cout << node.serialize(true) << std::endl;
+```
+```json
+{
+  "key": "value",
+  "obj": {
+    "name": "hello"
+  },
+  "array": [
+    32,
+    99,
+    75
+  ]
+}
 ```
 
 ### Tutorial
 
-In RFC 4627, only objects or arrays were allowed as root values of json.
+In [RFC 4627](https://tools.ietf.org/html/rfc4627), only objects or arrays were allowed as root values of json.
 
 ```c++
 assert(node.is_object());
