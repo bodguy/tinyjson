@@ -748,15 +748,23 @@ namespace tinyjson {
 
   class json_parser {
   public:
-    static bool parse(json_node& value, const std::string& json);
+    inline static bool parse(json_node& value, const std::string& json, std::string& err);
 
   private:
-    static bool parse_number(double* number, const char** token);
-    static void parse_string(string& str, const char** token);
-    static bool parse_value(json_node& value, const char** token);
-    static bool parse_object(json_node& value, const char** token);
-    static bool parse_array(json_node& value, const char** token);
+    inline static bool make_err_msg(const char* msg, std::string& err);
+    inline static bool parse_number(double* number, const char** token);
+    inline static void parse_string(string& str, const char** token);
+    inline static bool parse_value(json_node& value, const char** token, std::string& err);
+    inline static bool parse_object(json_node& value, const char** token, std::string& err);
+    inline static bool parse_array(json_node& value, const char** token, std::string& err);
   };
+
+  bool json_parser::make_err_msg(const char* msg, std::string& err) {
+    char buf[64];
+    snprintf(buf, sizeof(buf), "%s", msg);
+    err = buf;
+    return false;
+  }
 
   bool json_parser::parse_number(double* number, const char** token) {
     (*token) += strspn((*token), " \t");
@@ -776,6 +784,7 @@ namespace tinyjson {
     // skip "
     if ((*token)[0] == token_type::double_quote) (*token)++;
     const char* end = (*token) + strcspn((*token), "\"");
+    str.clear();
     if ((*token) != end) {
       str.assign((*token), end - (*token));
     }
@@ -783,7 +792,7 @@ namespace tinyjson {
     (*token) = ++end;
   }
 
-  bool json_parser::parse_value(json_node& value, const char** token) {
+  bool json_parser::parse_value(json_node& value, const char** token, std::string& err) {
     if ((*token)[0] == token_type::double_quote) {
       // string
       string str_value;
@@ -803,14 +812,16 @@ namespace tinyjson {
     } else {
       // number
       double number = 0.0;
-      if (!parse_number(&number, token)) return false;
+      if (!parse_number(&number, token)) {
+        return make_err_msg("parse number error.", err);
+      }
       value.set(number);
     }
 
     return true;
   }
 
-  bool json_parser::parse_object(json_node& value, const char** token) {
+  bool json_parser::parse_object(json_node& value, const char** token, std::string& err) {
     string current_key;
     object* root = new object();
 
@@ -819,7 +830,9 @@ namespace tinyjson {
 
     while ((*token)[0]) {
       (*token) += strspn((*token), " \t\n\r");
-      if ((*token) == nullptr) return false;
+      if ((*token) == nullptr) {
+        return make_err_msg("empty token.", err);
+      }
 
       if ((*token)[0] == token_type::comma) {
         (*token)++;
@@ -835,7 +848,9 @@ namespace tinyjson {
       if ((*token)[0] == token_type::double_quote) {
         parse_string(current_key, token);
         // empty key is not allowed
-        if (current_key.empty()) return false;
+        if (current_key.empty()) {
+          return make_err_msg("empty key is not allowed.", err);
+        }
         continue;
       }
 
@@ -845,11 +860,11 @@ namespace tinyjson {
 
         json_node* current_value = new json_node();
         if ((*token)[0] == token_type::start_object) {
-          if (!parse_object(*current_value, token)) return false;
+          if (!parse_object(*current_value, token, err)) return false;
         } else if ((*token)[0] == token_type::start_array) {
-          if (!parse_array(*current_value, token)) return false;
+          if (!parse_array(*current_value, token, err)) return false;
         } else {
-          if (!parse_value(*current_value, token)) return false;
+          if (!parse_value(*current_value, token, err)) return false;
         }
         root->insert(std::make_pair(current_key, current_value));
 
@@ -861,7 +876,7 @@ namespace tinyjson {
     return true;
   }
 
-  bool json_parser::parse_array(json_node& value, const char** token) {
+  bool json_parser::parse_array(json_node& value, const char** token, std::string& err) {
     array* root = new array();
 
     // skip [
@@ -869,7 +884,9 @@ namespace tinyjson {
 
     while ((*token)[0]) {
       (*token) += strspn((*token), " \t\n\r");
-      if ((*token) == nullptr) return false;
+      if ((*token) == nullptr) {
+        return make_err_msg("empty token.", err);
+      }
 
       // end of array
       if ((*token)[0] == token_type::end_array) {
@@ -884,15 +901,15 @@ namespace tinyjson {
 
       json_node* current_value = new json_node();
       if ((*token)[0] == token_type::start_object) {
-        if (!parse_object(*current_value, token)) return false;
+        if (!parse_object(*current_value, token, err)) return false;
         root->emplace_back(current_value);
         continue;
       } else if ((*token)[0] == token_type::start_array) {
-        if (!parse_array(*current_value, token)) return false;
+        if (!parse_array(*current_value, token, err)) return false;
         root->emplace_back(current_value);
         continue;
       } else {
-        if (!parse_value(*current_value, token)) return false;
+        if (!parse_value(*current_value, token, err)) return false;
         root->emplace_back(current_value);
         continue;
       }
@@ -902,16 +919,19 @@ namespace tinyjson {
     return true;
   }
 
-  bool json_parser::parse(json_node& value, const std::string& json) {
+  bool json_parser::parse(json_node& value, const std::string& json, std::string& err) {
     const char* token = json.c_str();
+    err.clear();
 
     token += strspn(token, " \t\n\r");
-    if (token == nullptr) return false;
+    if (0 == strcmp(token, "")) {
+      return make_err_msg("the json is empty.", err);
+    }
 
     if (token[0] == token_type::start_object) {
-      if (!parse_object(value, &token)) return false;
+      if (!parse_object(value, &token, err)) return false;
     } else if (token[0] == token_type::start_array) {
-      if (!parse_array(value, &token)) return false;
+      if (!parse_array(value, &token, err)) return false;
     }
 
     return true;
