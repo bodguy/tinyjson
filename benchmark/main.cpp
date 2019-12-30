@@ -9,7 +9,7 @@ int main() {
   std::string json;
 
   watch.start();
-  bool res = read_file_fast("../sample/large_file.json", json);
+  bool res = read_file_fast("../sample/sample8.json", json);
   watch.stop();
 
   if (!res) {
@@ -19,12 +19,13 @@ int main() {
 
   std::cout << "read from file elapsed: " << watch.milli() << " ms" << std::endl;
 
+  std::string err;
   watch.start();
-  res = json_parser::parse(node, json);
+  res = json_parser::parse(node, json, err);
   watch.stop();
 
   if (!res) {
-    std::cout << "json parse failed" << std::endl;
+    std::cout << err << std::endl;
     return -1;
   }
 
@@ -35,7 +36,7 @@ int main() {
   watch.stop();
 
   std::cout << "serialize json elapsed: " << watch.milli() << " ms" << std::endl;
-//  std::cout << node.serialize(true) << std::endl;
+  std::cout << serialized << std::endl;
 
   return 0;
 }

@@ -10,13 +10,16 @@ compiled and tested on c++14 or upper version.
 
 ```c++
 tinyjson::json_node node1;
+std::string err;
 string json = R"({"key":"value","obj":{"name":"hello"},"array":[32,99,75]})";
-bool result = tinyjson::json_parser::parse(node1, json);
-if (result) {
-  // true -> prettify serialize
-  // false -> unformatted serialize (default)
-  std::cout << node1.serialize(true) << '\n';
+bool result = tinyjson::json_parser::parse(node1, json, err);
+if (!result) {
+  std::cout << err << std::endl;
+  return -1;
 }
+// true -> prettify serialize
+// false -> unformatted serialize (default)
+std::cout << node1.serialize(true) << '\n';
 ```
 
 ### Tutorial
@@ -256,6 +259,24 @@ std::cout << node2.serialize(true) << std::endl; // prettify print
 }
 ```
 
+### Number
+
+The number is represented by e-notation.
+
+```json
+{
+  "e-not": 3.125e7
+}
+```
+
+above example can be expressed as following.
+
+```json
+{
+  "e-not": 31250000
+}
+```
+
 ### Performance benchmark
 
 tested on MackBook Pro 2.5Ghz Quad core i7, 16GB RAM  
@@ -281,6 +302,4 @@ serialize: 5552.61 ms
 
 ### ToDo
 
-- utf8 support
-- error message
-- json validation
+- utf8 support: switching to utf16string
