@@ -36,7 +36,7 @@ int main() {
   watch.stop();
 
   std::cout << "serialize json elapsed: " << watch.milli() << " ms" << std::endl;
-  std::cout << node.serialize(true) << std::endl;
+  std::cout << serialized << std::endl;
 
   return 0;
 }

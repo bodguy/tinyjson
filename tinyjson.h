@@ -760,9 +760,10 @@ namespace tinyjson {
 
       token += strspn(token, " \t\n\r");
       if (0 == strcmp(token, "")) {
-        return make_err_msg("the json is empty.", err);
+        return make_err_msg("empty json is not allowed.", err);
       }
 
+      // RFC 4627: only objects or arrays were allowed as root
       if (token[0] == token_type::start_object) {
         if (!parse_object(value, &token, err)) return false;
       } else if (token[0] == token_type::start_array) {
@@ -836,23 +837,18 @@ namespace tinyjson {
       object* root = new object();
 
       // skip {
-      if ((*token)[0] == token_type::start_object) (*token)++;
+      if ((*token)[0] != token_type::start_object) {
+        return make_err_msg("invalid start object token.", err);
+      }
 
-      while ((*token)[0]) {
-        (*token) += strspn((*token), " \t\n\r");
-        if ((*token) == nullptr) {
-          return make_err_msg("empty token.", err);
-        }
+      (*token)++;
 
+      do {
         if ((*token)[0] == token_type::comma) {
           (*token)++;
         }
 
-        // end of object
-        if ((*token)[0] == token_type::end_object) {
-          (*token)++;
-          break;
-        }
+        (*token) += strspn((*token), " \t\n\r");
 
         // start of key
         if ((*token)[0] == token_type::double_quote) {
@@ -861,7 +857,7 @@ namespace tinyjson {
           if (current_key.empty()) {
             return make_err_msg("empty key is not allowed.", err);
           }
-          continue;
+          (*token) += strspn((*token), " \t\n\r");
         }
 
         if ((*token)[0] == token_type::colon) {
@@ -877,11 +873,17 @@ namespace tinyjson {
             if (!parse_value(*current_value, token, err)) return false;
           }
           root->insert(std::make_pair(current_key, current_value));
-
-          continue;
         }
+
+        (*token) += strspn((*token), " \t\n\r");
+      } while(((*token)[0] == token_type::comma));
+
+      (*token) += strspn((*token), " \t\n\r");
+      if ((*token)[0] != token_type::end_object) {
+        return make_err_msg("invalid token.", err);
       }
 
+      (*token)++;
       value.set(root);
       return true;
     }

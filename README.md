@@ -256,6 +256,24 @@ std::cout << node2.serialize(true) << std::endl; // prettify print
 }
 ```
 
+### Number
+
+The number is represented by e-notation.
+
+```json
+{
+  "e-not": 3.125e7
+}
+```
+
+above example can be expressed as following.
+
+```json
+{
+  "e-not": 31250000
+}
+```
+
 ### Performance benchmark
 
 tested on MackBook Pro 2.5Ghz Quad core i7, 16GB RAM  
