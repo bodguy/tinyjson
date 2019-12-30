@@ -302,6 +302,4 @@ serialize: 5552.61 ms
 
 ### ToDo
 
-- utf8 support
-- error message
-- json validation
+- utf8 support: switching to utf16string
