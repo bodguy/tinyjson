@@ -758,22 +758,28 @@ namespace tinyjson {
       const char* token = json.c_str();
       err.clear();
 
-      token += strspn(token, " \t\n\r");
-      if (0 == strcmp(token, "")) {
-        return make_err_msg("empty json is not allowed.", err);
-      }
-
       // RFC 4627: only objects or arrays were allowed as root
-      if (token[0] == token_type::start_object) {
+      if (expect_token(&token, token_type::start_object)) {
         if (!parse_object(value, &token, err)) return false;
-      } else if (token[0] == token_type::start_array) {
+      } else if (expect_token(&token, token_type::start_array)) {
         if (!parse_array(value, &token, err)) return false;
+      } else {
+        return make_err_msg("invalid or empty json.", err);
       }
 
       return true;
     }
 
   private:
+    FORCE_INLINE static bool expect_token(const char** token, token_type type) {
+      (*token) += strspn((*token), " \t\n\r");
+      if ((*token)[0] == type) {
+        (*token)++;
+        return true;
+      }
+
+      return false;
+    }
     FORCE_INLINE static bool make_err_msg(const char* msg, std::string& err) {
       char buf[64];
       snprintf(buf, sizeof(buf), "%s", msg);
@@ -793,21 +799,25 @@ namespace tinyjson {
 
       return false;
     }
-    FORCE_INLINE static void parse_string(string& str, const char** token) {
+    FORCE_INLINE static bool parse_string(string& str, const char** token) {
       // skip "
       if ((*token)[0] == token_type::double_quote) (*token)++;
       const char* end = (*token) + strcspn((*token), "\"");
       str.clear();
       if ((*token) != end) {
         str.assign((*token), end - (*token));
+        (*token) = ++end;
+        return true;
       }
 
       (*token) = ++end;
+      return false;
     }
     FORCE_INLINE static bool parse_value(json_node& value, const char** token, std::string& err) {
       if ((*token)[0] == token_type::double_quote) {
         // string
         string str_value;
+        // allow empty string
         parse_string(str_value, token);
         value.set(str_value);
       } else if (((*token)[0] == 't') && (0 == strncmp((*token), "true", 4))) {
@@ -825,7 +835,7 @@ namespace tinyjson {
         // number
         double number = 0.0;
         if (!parse_number(&number, token)) {
-          return make_err_msg("parse number error.", err);
+          return make_err_msg("parse error.", err);
         }
         value.set(number);
       }
@@ -836,94 +846,60 @@ namespace tinyjson {
       string current_key;
       object* root = new object();
 
-      // skip {
-      if ((*token)[0] != token_type::start_object) {
-        return make_err_msg("invalid start object token.", err);
+      // empty object
+      if (expect_token(token, token_type::end_object)) {
+        value.set(root);
+        return true;
       }
-
-      (*token)++;
 
       do {
-        if ((*token)[0] == token_type::comma) {
-          (*token)++;
+        if (!expect_token(token, token_type::double_quote)
+          || !parse_string(current_key, token)
+          || !expect_token(token, token_type::colon)) {
+          return make_err_msg("invalid token.", err);
         }
 
-        (*token) += strspn((*token), " \t\n\r");
-
-        // start of key
-        if ((*token)[0] == token_type::double_quote) {
-          parse_string(current_key, token);
-          // empty key is not allowed
-          if (current_key.empty()) {
-            return make_err_msg("empty key is not allowed.", err);
-          }
-          (*token) += strspn((*token), " \t\n\r");
+        json_node* current_value = new json_node();
+        if (expect_token(token, token_type::start_object)) {
+          if (!parse_object(*current_value, token, err)) return false;
+        } else if (expect_token(token, token_type::start_array)) {
+          if (!parse_array(*current_value, token, err)) return false;
+        } else {
+          if (!parse_value(*current_value, token, err)) return false;
         }
+        root->insert(std::make_pair(current_key, current_value));
+      } while(expect_token(token, token_type::comma));
 
-        if ((*token)[0] == token_type::colon) {
-          (*token)++;
-          (*token) += strspn((*token), " \t\n\r");
-
-          json_node* current_value = new json_node();
-          if ((*token)[0] == token_type::start_object) {
-            if (!parse_object(*current_value, token, err)) return false;
-          } else if ((*token)[0] == token_type::start_array) {
-            if (!parse_array(*current_value, token, err)) return false;
-          } else {
-            if (!parse_value(*current_value, token, err)) return false;
-          }
-          root->insert(std::make_pair(current_key, current_value));
-        }
-
-        (*token) += strspn((*token), " \t\n\r");
-      } while(((*token)[0] == token_type::comma));
-
-      (*token) += strspn((*token), " \t\n\r");
-      if ((*token)[0] != token_type::end_object) {
-        return make_err_msg("invalid token.", err);
+      if (!expect_token(token, token_type::end_object)) {
+        return make_err_msg("invalid end of object.", err);
       }
 
-      (*token)++;
       value.set(root);
       return true;
     }
     FORCE_INLINE static bool parse_array(json_node& value, const char** token, std::string& err) {
       array* root = new array();
 
-      // skip [
-      if ((*token)[0] == token_type::start_array) (*token)++;
+      // empty array
+      if (expect_token(token, token_type::end_array)) {
+        value.set(root);
+        return true;
+      }
 
-      while ((*token)[0]) {
-        (*token) += strspn((*token), " \t\n\r");
-        if ((*token) == nullptr) {
-          return make_err_msg("empty token.", err);
-        }
-
-        // end of array
-        if ((*token)[0] == token_type::end_array) {
-          (*token)++;
-          break;
-        }
-
-        if ((*token)[0] == token_type::comma) {
-          (*token)++;
-          continue;
-        }
-
+      do {
         json_node* current_value = new json_node();
-        if ((*token)[0] == token_type::start_object) {
+        if (expect_token(token, token_type::start_object)) {
           if (!parse_object(*current_value, token, err)) return false;
-          root->emplace_back(current_value);
-          continue;
-        } else if ((*token)[0] == token_type::start_array) {
+        } else if (expect_token(token, token_type::start_array)) {
           if (!parse_array(*current_value, token, err)) return false;
-          root->emplace_back(current_value);
-          continue;
         } else {
           if (!parse_value(*current_value, token, err)) return false;
-          root->emplace_back(current_value);
-          continue;
         }
+        root->emplace_back(current_value);
+      } while(expect_token(token, token_type::comma));
+
+      if (!expect_token(token, token_type::end_array)) {
+        return make_err_msg("invalid end of array.", err);
       }
 
       value.set(root);
