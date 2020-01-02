@@ -8,7 +8,6 @@
 #include <cmath>
 #include <limits>
 #include <algorithm>
-#include <cassert>
 
 #define USE_UNICODE false
 
@@ -16,6 +15,11 @@
 #define FORCE_INLINE	__forceinline
 #else	// defined(_MSC_VER)
 #define	FORCE_INLINE inline __attribute__((always_inline))
+#endif
+
+#ifndef _ASSERT
+#include <cassert>
+#define _ASSERT(_EXPR) assert(_EXPR)
 #endif
 
 namespace tinyjson {
@@ -380,23 +384,23 @@ namespace tinyjson {
       return index < storage.array_val->size() ? *(*storage.array_val)[index] : null_node;
     }
     FORCE_INLINE boolean get_boolean() const {
-      assert(is_boolean());
+      _ASSERT(is_boolean());
       return storage.bool_val;
     }
     FORCE_INLINE number get_number() const {
-      assert(is_number());
+      _ASSERT(is_number());
       return storage.num_val;
     }
     FORCE_INLINE string& get_string() const {
-      assert(is_string());
+      _ASSERT(is_string());
       return *(storage.str_val);
     }
     FORCE_INLINE array& get_array() const {
-      assert(is_array());
+      _ASSERT(is_array());
       return *(storage.array_val);
     }
     FORCE_INLINE object& get_object() const {
-      assert(is_object());
+      _ASSERT(is_object());
       return *(storage.object_val);
     }
     FORCE_INLINE json_node& operator[](size_t index) { return this->get_element(index); }
