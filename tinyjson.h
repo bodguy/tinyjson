@@ -8,6 +8,7 @@
 #include <cmath>
 #include <limits>
 #include <algorithm>
+#include <cassert>
 
 #define USE_UNICODE false
 
@@ -352,7 +353,7 @@ namespace tinyjson {
 #endif
     explicit json_node(const array& val) : storage(), type() { set(val); }
     explicit json_node(const object& val) : storage(), type() { set(val); }
-    FORCE_INLINE ~json_node() {
+    ~json_node() {
       clear();
     }
 
@@ -658,7 +659,7 @@ namespace tinyjson {
       std::copy(str.begin(), str.end(), iter);
       iter++ = '\"';
     }
-    FORCE_INLINE void _serialize(int indent, std::back_insert_iterator<string>& iter, unsigned int indent_size) const {
+    void _serialize(int indent, std::back_insert_iterator<string>& iter, unsigned int indent_size) const {
       switch (type) {
         case node_type::string_type:
           serialize_str(*(storage.str_val), iter);
@@ -842,7 +843,7 @@ namespace tinyjson {
 
       return true;
     }
-    FORCE_INLINE static bool parse_object(json_node& value, const char** token, std::string& err) {
+    static bool parse_object(json_node& value, const char** token, std::string& err) {
       string current_key;
       object* root = new object();
 
@@ -877,7 +878,7 @@ namespace tinyjson {
       value.set(root);
       return true;
     }
-    FORCE_INLINE static bool parse_array(json_node& value, const char** token, std::string& err) {
+    static bool parse_array(json_node& value, const char** token, std::string& err) {
       array* root = new array();
 
       // empty array
