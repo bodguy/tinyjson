@@ -804,6 +804,12 @@ namespace tinyjson {
 
       return false;
     }
+    static void replace_escape(string& str, const string& original, const std::string& replace) {
+      auto pos = str.find(original);
+      if (pos == string::npos) return;
+      str.replace(pos, original.length(), replace);
+      replace_escape(str, original, replace);
+    }
     FORCE_INLINE static bool parse_string(string& str, const char** token) {
       // skip "
       if ((*token)[0] == token_type::double_quote) (*token)++;
@@ -811,6 +817,7 @@ namespace tinyjson {
       str.clear();
       if ((*token) != end) {
         str.assign((*token), end - (*token));
+        replace_escape(str, "\\/", "/");
         (*token) = ++end;
         return true;
       }
