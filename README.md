@@ -1,5 +1,7 @@
 ### tinyjson
 
+[![Build status](https://ci.appveyor.com/api/projects/status/vx5jxh7fojrt5tyb?svg=true)](https://ci.appveyor.com/project/bodguy/tinyjson)
+
 Blazing fast header only json parser
 
 ### Compiler
