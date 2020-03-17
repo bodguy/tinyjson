@@ -2,6 +2,7 @@
 
 ![https://opensource.org/licenses/Apache-2.0](license.svg)
 [![Build status](https://ci.appveyor.com/api/projects/status/vx5jxh7fojrt5tyb?svg=true)](https://ci.appveyor.com/project/bodguy/tinyjson)
+[![Build Status](https://travis-ci.com/bodguy/tinyjson.svg?branch=master)](https://travis-ci.com/bodguy/tinyjson)
 
 Blazing fast header only json parser
 
