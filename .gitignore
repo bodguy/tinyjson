@@ -7,3 +7,4 @@
 !/CMakeLists.txt
 !/README.md
 !/.gitignore
+!/appveyor.yml

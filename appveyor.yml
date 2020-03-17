@@ -1,0 +1,14 @@
+version: 1.0.{build}
+image:
+  - Visual Studio 2017
+clone_folder: c:\projects\source
+platform:
+  - x64
+build_script:
+  - cmd: mkdir build
+  - cmd: cd build
+  - cmd: cmake c:\projects\source -G "Visual Studio 15"
+  - cmd: cmake --build . --config Release
+artifacts:
+  path: build\Release\*.exe
+  name: binary_executable
