@@ -10,3 +10,4 @@
 !/appveyor.yml
 !/LICENSE.md
 !/license.svg
+!/.travis.yml
