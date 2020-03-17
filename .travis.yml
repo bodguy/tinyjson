@@ -1,0 +1,21 @@
+language: cpp
+matrix:
+  include:
+    - os: linux
+      dist: trusty
+      sudo: true
+      compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-4.9
+      env:
+        - MATRIX_EVAL="CC=gcc-4.0 && CXX=g++-4.9"
+
+script:
+  - mkdir -p build
+  - cd build
+  - cmake .. -DCMAKE_BUILD_TYPE=Release
+  - make

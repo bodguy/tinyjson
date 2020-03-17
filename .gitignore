@@ -8,3 +8,6 @@
 !/README.md
 !/.gitignore
 !/appveyor.yml
+!/LICENSE.md
+!/license.svg
+!/.travis.yml
