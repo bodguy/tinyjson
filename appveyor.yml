@@ -1,6 +1,10 @@
 version: 1.0.{build}
 image:
   - Visual Studio 2017
+branches:
+  only:
+    - master
+    - release
 clone_folder: c:\projects\source
 platform:
   - x64
