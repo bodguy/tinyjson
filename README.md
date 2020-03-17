@@ -299,11 +299,11 @@ above example can be expressed as following.
 tested on MackBook Pro 2.5Ghz Quad core i7, 16GB RAM  
 with json file which has about 190 MB size.
 
-clang 9.0.0:
+clang version 9.0.1:
 
 ```
-deserialize: 10238.3 ms
-serialize: 10451.3 ms
+deserialize: 3762.73 ms
+serialize: 3805.3 ms
 ```
 
 msvc 16:
