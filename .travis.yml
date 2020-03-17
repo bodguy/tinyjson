@@ -10,10 +10,12 @@ jobs:
         apt:
           sources:
             - ubuntu-toolchain-r-test
+            - kalakris-cmake
           packages:
             - g++-4.9
+            - cmake
       env:
-        - MATRIX_EVAL="CC=gcc-4.0 && CXX=g++-4.9"
+        - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
 
 script:
   - mkdir -p build
