@@ -2,7 +2,13 @@ language: cpp
 compiler: gcc
 dist: trusty
 
+before_install:
+  - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+  - sudo apt-get update -qq
+
 install:
+  - sudo apt-get install -qq g++-6
+  - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-6 90
   # first we create a directory for the CMake binaries
   - DEPS_DIR="${TRAVIS_BUILD_DIR}/deps"
   - mkdir ${DEPS_DIR} && cd ${DEPS_DIR}
