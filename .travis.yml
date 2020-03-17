@@ -1,15 +1,6 @@
 language: cpp
-os: linux
+compiler: gcc
 dist: trusty
-
-addons:
-  apt:
-    sources:
-      - ubuntu-toolchain-r-test
-    packages:
-      - g++-5
-    env:
-      - MATRIX_EVAL="CC=gcc-5.2 && CXX=g++-5.2"
 
 install:
   # first we create a directory for the CMake binaries
