@@ -1,5 +1,5 @@
-#include "../tinyjson.h"
 #include "utils.h"
+#include <tinyjson.h>
 
 using namespace tinyjson;
 
@@ -9,7 +9,7 @@ int main() {
   std::string json;
 
   watch.start();
-  bool res = read_file_fast("../sample/sample14.json", json);
+  bool res = read_file("../sample/sample14.json", json);
   watch.stop();
 
   if (!res) {
