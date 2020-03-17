@@ -1,9 +1,10 @@
 language: cpp
-matrix:
+os: linux
+dist: trusty
+jobs:
   include:
     - os: linux
       dist: trusty
-      sudo: true
       compiler: gcc
       addons:
         apt:
