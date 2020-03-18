@@ -309,8 +309,8 @@ serialize: 3805.3 ms
 msvc 16:
 
 ```
-deserialize: 5592.36 ms
-serialize: 5552.61 ms
+deserialize: 4891.86 ms
+serialize: 5942.79 ms
 ```
 
 ### Macro
