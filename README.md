@@ -1,17 +1,19 @@
-### tinyjson
+<img align="right" src="json.png">
 
 ![https://opensource.org/licenses/Apache-2.0](license.svg)
 [![Build status](https://ci.appveyor.com/api/projects/status/vx5jxh7fojrt5tyb?svg=true)](https://ci.appveyor.com/project/bodguy/tinyjson)
 [![Build Status](https://travis-ci.com/bodguy/tinyjson.svg?branch=master)](https://travis-ci.com/bodguy/tinyjson)
 [![Coverage Status](https://coveralls.io/repos/github/bodguy/tinyjson/badge.svg?branch=master)](https://coveralls.io/github/bodguy/tinyjson?branch=master)
 
+# tinyjson
+
 Blazing fast header only json parser
 
-### Compiler
+## Compiler
 
 compiled and tested on c++14 or higher version.
 
-### One Minute guide
+## One Minute guide
 
 ```c++
 tinyjson::json_node node;
@@ -40,7 +42,7 @@ std::cout << node.serialize(true) << std::endl;
 }
 ```
 
-### Tutorial
+## Tutorial
 
 In [RFC 4627](https://tools.ietf.org/html/rfc4627), only objects or arrays were allowed as root values of json.
 
@@ -49,7 +51,7 @@ assert(node.is_object());
 assert(node.is_array());
 ```
 
-### Get the values
+## Get the values
 
 Let's query about "key1" is exists or not.
 
@@ -79,7 +81,7 @@ below code shows function based approach equivalent which is a bit messy.
 std::cout << node.get_node("key1").serialize(true) << std::endl;
 ``` 
 
-### Set the values
+## Set the values
 
 setting values are simple as getting values. just take a value from [] operator and assign other values to this.
 
@@ -163,7 +165,7 @@ node["key1"]["hello4"] = node2;
 
 there are another case assigning same json_node instance. this will cause a undefined behaviour like memory leak.
 
-### Query array
+## Query array
 
 what about array? below sample code shows how to loop through all the elements.  
 but beware that, json_node.length() function works with string, array and object as well.  
@@ -203,7 +205,7 @@ hello4[2]: 99.8
 hello4[3]: 21.92
 ```
 
-### Query object
+## Query object
 
 querying object is same as array.  
 note that, object is almost same as ordered map. so any kind of standard iterator can be used.
@@ -226,7 +228,7 @@ null
 ]
 ```
 
-### Compare values
+## Compare values
 
 comparing values are simple like string compare.
 
@@ -248,7 +250,7 @@ inline bool operator==(const int other);
 
 operator with json_node compare two json_node as deep equal. the other three operator compare with json_node inner value. 
 
-### Export to json
+## Export to json
 
 export to json is a bit complex now.
 
@@ -277,7 +279,7 @@ std::cout << node2.serialize(true) << std::endl; // prettify print
 }
 ```
 
-### Number
+## Number
 
 The number is represented by e-notation.
 
@@ -295,7 +297,7 @@ above example can be expressed as following.
 }
 ```
 
-### Performance benchmark
+## Performance benchmark
 
 tested on MackBook Pro 2.5Ghz Quad core i7, 16GB RAM  
 with json file which has about 190 MB size.
@@ -314,10 +316,10 @@ deserialize: 4891.86 ms
 serialize: 5942.79 ms
 ```
 
-### Macro
+## Macro
 
 - USE_UNICODE: determines which one use from u16string and u8string.
 
-### ToDo
+## TODO
 
 - utf8 support: switching to utf16string
