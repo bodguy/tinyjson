@@ -4,6 +4,9 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/vx5jxh7fojrt5tyb?svg=true)](https://ci.appveyor.com/project/bodguy/tinyjson)
 [![Build Status](https://travis-ci.com/bodguy/tinyjson.svg?branch=master)](https://travis-ci.com/bodguy/tinyjson)
 [![Coverage Status](https://coveralls.io/repos/github/bodguy/tinyjson/badge.svg?branch=master)](https://coveralls.io/github/bodguy/tinyjson?branch=master)
+![GitHub file size in bytes](https://img.shields.io/github/size/bodguy/tinyjson/tinyjson.h)
+![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/bodguy/tinyjson)
+![GitHub last commit](https://img.shields.io/github/last-commit/bodguy/tinyjson)
 
 # tinyjson
 
